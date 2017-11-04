@@ -1,7 +1,6 @@
-VULKAN_INCLUDES = /usr/include/vulkan/
-VULKAN_LIBS = /usr/lib64/
-CFLAGS = -std=c++11 -I$(VULKAN_INCLUDES)
-LDFLAGS = -L$(VULKAN_LIBS) `pkg-config --static --libs glfw3` -lvulkan
+LIBS = /usr/lib64/
+CFLAGS = -std=c++11
+LDFLAGS = -L$(LIBS) `pkg-config --static --libs glfw3`
 
 build: main.cpp
 	g++ $(CFLAGS) -o es3_test main.cpp $(LDFLAGS)
