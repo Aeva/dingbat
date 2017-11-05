@@ -5,7 +5,7 @@ import subprocess
 linker_args = subprocess.check_output(
     'pkg-config --static --libs glfw3'.split(' '))
 linker_args = linker_args.decode().strip().split(' ')
-
+linker_args += "-lEGL -lGLESv2".split(' ')
 
 module = Extension('glfw_test',
                    sources = ['src/test.cpp'],

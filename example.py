@@ -1,6 +1,7 @@
 
 
 import sys
+import time
 import glfw_test
 
 if __name__ == "__main__":
@@ -10,8 +11,18 @@ if __name__ == "__main__":
 
     try:
         glfw_test.setup()
+        with open("test.vert", "r") as vert_file:
+            with open("test.frag", "r") as frag_file:
+                prog = glfw_test.build_shader(vert_file.read(), frag_file.read())
+        assert(prog)
+        import pdb; pdb.set_trace()
+        last = time.monotonic()
         while True:
-
+            now = time.monotonic()
+            delta = now - last
+            last = now
+            print ("delta: %s" % str(1/delta))
+            
             # object update code would go here
             
             glfw_test.swap_buffers()
