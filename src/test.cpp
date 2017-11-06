@@ -61,14 +61,43 @@ GLuint CompileShader(const char* ShaderSource, GLenum ShaderType)
 }
 
 
-bool ShaderCompiledStatus(GLuint ShaderId)
+bool CheckShader(GLuint ShaderId)
 {
+    GLint ShaderType;
+    glGetShaderiv(ShaderId, GL_SHADER_TYPE, &ShaderType);
+    char* TypeString;
+    if (ShaderType == GL_VERTEX_SHADER)
+    {
+        TypeString = "Vertex";
+    }
+    if (ShaderType == GL_FRAGMENT_SHADER)
+    {
+        TypeString = "Fragment";
+    }
     GLint CompiledOk;
     glGetShaderiv(ShaderId, GL_COMPILE_STATUS, &CompiledOk);
     if (!CompiledOk)
     {
-        // TODO: extract compiler error and raise.
+        GLint ShaderLogLength = 0;
+        glGetShaderiv(ShaderId, GL_INFO_LOG_LENGTH, &ShaderLogLength);
+	if (ShaderLogLength)
+	{
+            char* ShaderLog = (char*)malloc(sizeof(char) * ShaderLogLength);
+	    glGetShaderInfoLog(ShaderId, ShaderLogLength, NULL, ShaderLog);
+	    PyErr_Format(PyExc_RuntimeError,
+			 "%s shader failed to compile with error:\n %s\n",
+			 TypeString,
+			 ShaderLog);
+	}
+	else
+	{
+	    PyErr_Format(PyExc_RuntimeError,
+			 "%s shader failed to compile???\n", 
+			 TypeString);
+	}
+	return false;
     }
+    return true;
 }
 
 
@@ -78,12 +107,17 @@ static PyObject* BuildShader(PyObject *module, PyObject **args, Py_ssize_t nargs
     {
         const char* VertexSource = (const char*)PyUnicode_DATA(args[0]);
         const char* FragmentSource = (const char*)PyUnicode_DATA(args[1]);
-	bool bShaderCompiled;
 	
 	GLuint VertexShaderId = CompileShader(VertexSource, GL_VERTEX_SHADER);
-	bShaderCompiled = ShaderCompiledStatus(VertexShaderId);
+	if (!CheckShader(VertexShaderId))
+	{
+            Py_RETURN_NONE;
+	}
 	GLuint FragmentShaderId = CompileShader(FragmentSource, GL_FRAGMENT_SHADER);
-	bShaderCompiled = ShaderCompiledStatus(VertexShaderId);
+	if (!CheckShader(FragmentShaderId))
+	{
+            Py_RETURN_NONE;
+	}
 
 	GLuint ShaderProgramId = glCreateProgram();
 	glAttachShader(ShaderProgramId, VertexShaderId);
