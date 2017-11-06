@@ -102,9 +102,9 @@ GLuint CompileShader(const char* ShaderSource, GLenum ShaderType)
 	}
 
 	glDeleteShader(ShaderId);
-	return false;
+	return 0;
     }
-    return true;
+    return ShaderId;
 }
 
 
