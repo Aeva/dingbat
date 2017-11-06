@@ -52,49 +52,56 @@ static PyObject* SwapBuffers(PyObject *module, PyObject **args, Py_ssize_t nargs
 }
 
 
-GLuint CompileShader(const char* ShaderSource, GLenum ShaderType)
+void ShaderError(GLenum ShaderType, const char* ErrorMessage)
 {
-    GLuint ShaderId = glCreateShader(ShaderType);
-    glShaderSource(ShaderId, 1, &ShaderSource, NULL);
-    glCompileShader(ShaderId);
-    return ShaderId;
-}
-
-
-bool CheckShader(GLuint ShaderId)
-{
-    GLint ShaderType;
-    glGetShaderiv(ShaderId, GL_SHADER_TYPE, &ShaderType);
-    char* TypeString;
+  char* TypeString = (char*)"Unknown";
     if (ShaderType == GL_VERTEX_SHADER)
     {
-        TypeString = "Vertex";
+	TypeString = (char*)"Vertex";
     }
     if (ShaderType == GL_FRAGMENT_SHADER)
     {
-        TypeString = "Fragment";
+	TypeString = (char*)"Fragment";
     }
+
+    PyObject* ErrorString = PyUnicode_FromFormat("%s shader failed to compile: %s",
+						 TypeString, ErrorMessage);
+    PyErr_SetObject(PyExc_RuntimeError, ErrorString);
+}
+
+
+GLuint CompileShader(const char* ShaderSource, GLenum ShaderType)
+{
+    GLuint ShaderId = glCreateShader(ShaderType);
+    if (!ShaderId)
+    {
+        ShaderError(ShaderType, "glCreateShader returned 0.");
+	return 0;
+    }
+    
+    glShaderSource(ShaderId, 1, &ShaderSource, NULL);
+    glCompileShader(ShaderId);
+
     GLint CompiledOk;
     glGetShaderiv(ShaderId, GL_COMPILE_STATUS, &CompiledOk);
     if (!CompiledOk)
     {
+
         GLint ShaderLogLength = 0;
         glGetShaderiv(ShaderId, GL_INFO_LOG_LENGTH, &ShaderLogLength);
 	if (ShaderLogLength)
 	{
             char* ShaderLog = (char*)malloc(sizeof(char) * ShaderLogLength);
 	    glGetShaderInfoLog(ShaderId, ShaderLogLength, NULL, ShaderLog);
-	    PyErr_Format(PyExc_RuntimeError,
-			 "%s shader failed to compile with error:\n %s\n",
-			 TypeString,
-			 ShaderLog);
+	    ShaderError(ShaderType, ShaderLog);
+	    free(ShaderLog);
 	}
 	else
 	{
-	    PyErr_Format(PyExc_RuntimeError,
-			 "%s shader failed to compile???\n", 
-			 TypeString);
+            ShaderError(ShaderType, "unkown error.");
 	}
+
+	glDeleteShader(ShaderId);
 	return false;
     }
     return true;
@@ -109,12 +116,12 @@ static PyObject* BuildShader(PyObject *module, PyObject **args, Py_ssize_t nargs
         const char* FragmentSource = (const char*)PyUnicode_DATA(args[1]);
 	
 	GLuint VertexShaderId = CompileShader(VertexSource, GL_VERTEX_SHADER);
-	if (!CheckShader(VertexShaderId))
+	if (!VertexShaderId)
 	{
             Py_RETURN_NONE;
 	}
 	GLuint FragmentShaderId = CompileShader(FragmentSource, GL_FRAGMENT_SHADER);
-	if (!CheckShader(FragmentShaderId))
+	if (!FragmentShaderId)
 	{
             Py_RETURN_NONE;
 	}
