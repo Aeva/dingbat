@@ -52,25 +52,57 @@ static PyObject* SwapBuffers(PyObject *module, PyObject **args, Py_ssize_t nargs
 }
 
 
+GLuint CompileShader(const char* ShaderSource, GLenum ShaderType)
+{
+    GLuint ShaderId = glCreateShader(ShaderType);
+    glShaderSource(ShaderId, 1, &ShaderSource, NULL);
+    glCompileShader(ShaderId);
+    return ShaderId;
+}
+
+
+bool ShaderCompiledStatus(GLuint ShaderId)
+{
+    GLint CompiledOk;
+    glGetShaderiv(ShaderId, GL_COMPILE_STATUS, &CompiledOk);
+    if (!CompiledOk)
+    {
+        // TODO: extract compiler error and raise.
+    }
+}
+
+
 static PyObject* BuildShader(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
 {
     if (nargs == 2)
     {
         const char* VertexSource = (const char*)PyUnicode_DATA(args[0]);
         const char* FragmentSource = (const char*)PyUnicode_DATA(args[1]);
-	GLuint VertexShaderId = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(VertexShaderId, 1, &VertexSource, NULL);
-	glCompileShader(VertexShaderId);
-	GLuint FragmentShaderId = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(FragmentShaderId, 1, &FragmentSource, NULL);
-	glCompileShader(FragmentShaderId);
+	bool bShaderCompiled;
+	
+	GLuint VertexShaderId = CompileShader(VertexSource, GL_VERTEX_SHADER);
+	bShaderCompiled = ShaderCompiledStatus(VertexShaderId);
+	GLuint FragmentShaderId = CompileShader(FragmentSource, GL_FRAGMENT_SHADER);
+	bShaderCompiled = ShaderCompiledStatus(VertexShaderId);
+
 	GLuint ShaderProgramId = glCreateProgram();
 	glAttachShader(ShaderProgramId, VertexShaderId);
 	glAttachShader(ShaderProgramId, FragmentShaderId);
 	glLinkProgram(ShaderProgramId);
+
+	// TODO: validate program, raise if there is an error.
+	
 	return PyLong_FromLong(ShaderProgramId);
     }
 
+    Py_RETURN_NONE;
+}
+
+
+static PyObject* ActivateShader(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
+{
+    GLuint ShaderProgramId = PyLong_AsLong(args[0]);
+    glUseProgram(ShaderProgramId);
     Py_RETURN_NONE;
 }
 
@@ -80,6 +112,7 @@ static PyMethodDef ThroughputMethods[] = {
     {"teardown", (PyCFunction)TeardownContext, METH_FASTCALL, NULL},
     {"swap_buffers", (PyCFunction)SwapBuffers, METH_FASTCALL, NULL},
     {"build_shader", (PyCFunction)BuildShader, METH_FASTCALL, NULL},
+    {"activate_shader", (PyCFunction)ActivateShader, METH_FASTCALL, NULL},
     {NULL, NULL, 0, NULL}
 };
 

@@ -15,7 +15,8 @@ if __name__ == "__main__":
             with open("test.frag", "r") as frag_file:
                 prog = glfw_test.build_shader(vert_file.read(), frag_file.read())
         assert(prog)
-        import pdb; pdb.set_trace()
+        glfw_test.activate_shader(prog)
+        
         last = time.monotonic()
         while True:
             now = time.monotonic()
