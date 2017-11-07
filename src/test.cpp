@@ -3,6 +3,7 @@
 #define GLFW_INCLUDE_ES31
 #include <GLFW/glfw3.h>
 #include <Python.h>
+#include "shaders.h"
 
 
 bool bSetupCompleted = false;
@@ -52,90 +53,14 @@ static PyObject* SwapBuffers(PyObject *module, PyObject **args, Py_ssize_t nargs
 }
 
 
-void ShaderError(GLenum ShaderType, const char* ErrorMessage)
-{
-  char* TypeString = (char*)"Unknown";
-    if (ShaderType == GL_VERTEX_SHADER)
-    {
-	TypeString = (char*)"Vertex";
-    }
-    if (ShaderType == GL_FRAGMENT_SHADER)
-    {
-	TypeString = (char*)"Fragment";
-    }
-
-    PyObject* ErrorString = PyUnicode_FromFormat("%s shader failed to compile: %s",
-						 TypeString, ErrorMessage);
-    PyErr_SetObject(PyExc_RuntimeError, ErrorString);
-}
-
-
-GLuint CompileShader(const char* ShaderSource, GLenum ShaderType)
-{
-    GLuint ShaderId = glCreateShader(ShaderType);
-    if (!ShaderId)
-    {
-        ShaderError(ShaderType, "glCreateShader returned 0.");
-	return 0;
-    }
-    
-    glShaderSource(ShaderId, 1, &ShaderSource, NULL);
-    glCompileShader(ShaderId);
-
-    GLint CompiledOk;
-    glGetShaderiv(ShaderId, GL_COMPILE_STATUS, &CompiledOk);
-    if (!CompiledOk)
-    {
-
-        GLint ShaderLogLength = 0;
-        glGetShaderiv(ShaderId, GL_INFO_LOG_LENGTH, &ShaderLogLength);
-	if (ShaderLogLength)
-	{
-            char* ShaderLog = (char*)malloc(sizeof(char) * ShaderLogLength);
-	    glGetShaderInfoLog(ShaderId, ShaderLogLength, NULL, ShaderLog);
-	    ShaderError(ShaderType, ShaderLog);
-	    free(ShaderLog);
-	}
-	else
-	{
-            ShaderError(ShaderType, "unkown error.");
-	}
-
-	glDeleteShader(ShaderId);
-	return 0;
-    }
-    return ShaderId;
-}
-
-
 static PyObject* BuildShader(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
 {
     if (nargs == 2)
     {
         const char* VertexSource = (const char*)PyUnicode_DATA(args[0]);
         const char* FragmentSource = (const char*)PyUnicode_DATA(args[1]);
-	
-	GLuint VertexShaderId = CompileShader(VertexSource, GL_VERTEX_SHADER);
-	if (!VertexShaderId)
-	{
-            Py_RETURN_NONE;
-	}
-	GLuint FragmentShaderId = CompileShader(FragmentSource, GL_FRAGMENT_SHADER);
-	if (!FragmentShaderId)
-	{
-            Py_RETURN_NONE;
-	}
-
-	GLuint ShaderProgramId = glCreateProgram();
-	glAttachShader(ShaderProgramId, VertexShaderId);
-	glAttachShader(ShaderProgramId, FragmentShaderId);
-	glLinkProgram(ShaderProgramId);
-
-	// TODO: validate program, raise if there is an error.
-	
-	return PyLong_FromLong(ShaderProgramId);
+	return PyLong_FromLong(BuildShaderProgram(VertexSource, FragmentSource));
     }
-
     Py_RETURN_NONE;
 }
 

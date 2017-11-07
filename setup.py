@@ -8,8 +8,8 @@ linker_args = linker_args.decode().strip().split(' ')
 linker_args += "-lEGL -lGLESv2".split(' ')
 
 module = Extension('glfw_test',
-                   sources = ['src/test.cpp'],
-                   extra_compile_args = ['-std=c++11'],
+                   sources = ['src/test.cpp', 'src/shaders.cpp'],
+                   extra_compile_args = ['-std=c++14'],
                    extra_link_args = linker_args)
 
 
