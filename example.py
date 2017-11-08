@@ -2,6 +2,7 @@
 
 import sys
 import time
+import array
 import glfw_test
 
 if __name__ == "__main__":
@@ -16,6 +17,20 @@ if __name__ == "__main__":
                 prog = glfw_test.build_shader(vert_file.read(), frag_file.read())
         assert(prog)
         glfw_test.activate_shader(prog)
+
+        buffer_a = glfw_test.create_buffer()
+        buffer_b = glfw_test.create_buffer()
+        glfw_test.delete_buffer(buffer_a)
+
+        clip_space_triangle = [
+            0.0, 0.5, 0.0,
+            -0.5, -0.5, 0.0,
+            0.5, -0.5, 0.0
+        ]
+        
+        # https://docs.python.org/3.7/library/array.html
+        triangle_data = array.array('f', clip_space_triangle)
+        glfw_test.fill_buffer(buffer_b, triangle_data)
         
         last = time.monotonic()
         while True:

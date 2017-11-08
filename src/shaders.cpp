@@ -1,9 +1,9 @@
 
 #define GLFW_INCLUDE_ES31
 #include <GLFW/glfw3.h>
-#include <Python.h>
 #include <functional>
 #include <string>
+#include "util.h"
 #include "shaders.h"
 
 
@@ -51,15 +51,6 @@ inline bool CheckShaderStatus(GLuint ObjectId, GLenum StatusEnum, ErrorHandler E
 inline bool CheckProgramStatus(GLuint ObjectId, GLenum StatusEnum, ErrorHandler ErrorCallback)
 {
     return CheckStatus<glGetProgramiv, glGetProgramInfoLog>(ObjectId, StatusEnum, ErrorCallback);
-}
-
-
-
-
-void RaiseError(const char* HintString, const char* ErrorMessage)
-{
-    PyObject* ErrorString = PyUnicode_FromFormat("%s Error: %s", HintString, ErrorMessage ? ErrorMessage : "(no log data)");
-    PyErr_SetObject(PyExc_RuntimeError, ErrorString);
 }
 
 
@@ -119,7 +110,7 @@ GLuint LinkShaderProgram(GLuint VertexShaderId, GLuint FragmentShaderId)
     GLuint ProgramId = glCreateProgram();
     if (!ProgramId)
     {
-	PyErr_SetString(PyExc_RuntimeError, "glCreateProgram returned 0.");
+        RaiseError("glCreateProgram returned 0.");
 	return 0;
     }
     glAttachShader(ProgramId, VertexShaderId);
