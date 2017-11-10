@@ -88,9 +88,10 @@ GLuint CompileShader(const char* ShaderSource, GLenum ShaderType)
     glShaderSource(ShaderId, 1, &ShaderSource, NULL);
     glCompileShader(ShaderId);
 
-    CheckShaderStatus(ShaderId, GL_COMPILE_STATUS, [&ShaderId, &ShaderType](const char* ErrorLog) {
+    CheckShaderStatus(ShaderId, GL_COMPILE_STATUS, [&ShaderId, &ShaderType](const char* ErrorLog)
+    {
 	glDeleteShader(ShaderId);
-        ShaderId = 0;
+	ShaderId = 0;
 	RaiseError(ShaderTypeHint(ShaderType), ErrorLog);
     });
 
@@ -117,9 +118,10 @@ GLuint LinkShaderProgram(GLuint VertexShaderId, GLuint FragmentShaderId)
     glAttachShader(ProgramId, FragmentShaderId);
     glLinkProgram(ProgramId);
 
-    CheckProgramStatus(ProgramId, GL_LINK_STATUS, [&ProgramId](const char* ErrorLog) {
+    CheckProgramStatus(ProgramId, GL_LINK_STATUS, [&ProgramId](const char* ErrorLog)
+    {
 	glDeleteProgram(ProgramId);
-        ProgramId = 0;
+	ProgramId = 0;
 	RaiseError("Shader Program Linker", ErrorLog);
     });
 
@@ -129,9 +131,10 @@ GLuint LinkShaderProgram(GLuint VertexShaderId, GLuint FragmentShaderId)
     }
 
     glValidateProgram(ProgramId);
-    CheckProgramStatus(ProgramId, GL_VALIDATE_STATUS, [&ProgramId](const char* ErrorLog) {
+    CheckProgramStatus(ProgramId, GL_VALIDATE_STATUS, [&ProgramId](const char* ErrorLog)
+    {
 	glDeleteProgram(ProgramId);
-        ProgramId = 0;
+	ProgramId = 0;
 	RaiseError("Shader Program Validation", ErrorLog);
     });
 
