@@ -37,7 +37,6 @@ if __name__ == "__main__":
             now = time.monotonic()
             delta = now - last
             last = now
-            
             print ("delta: %s" % str(1/delta))
             
             glfw_test.naive_draw(buffer_b, 0, len(clip_space_triangle))

@@ -9,6 +9,12 @@
 #include "pdqdrawable.h"
 
 
+void WindowCloseCallback(GLFWwindow* window)
+{
+    PyErr_SetInterrupt();   
+}
+
+
 bool bSetupCompleted = false;
 GLFWwindow* window;
 static PyObject* SetupContext(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
@@ -28,6 +34,7 @@ static PyObject* SetupContext(PyObject *module, PyObject **args, Py_ssize_t narg
 	    Py_RETURN_NONE;
 	}
 	glfwMakeContextCurrent(window);
+	glfwSetWindowCloseCallback(window, WindowCloseCallback);
         bSetupCompleted = true;
     }
     Py_RETURN_NONE;
@@ -51,6 +58,7 @@ static PyObject* SwapBuffers(PyObject *module, PyObject **args, Py_ssize_t nargs
     if (bSetupCompleted)
     {
         glfwSwapBuffers(window);
+	glfwPollEvents();
     }
     Py_RETURN_NONE;
 }
