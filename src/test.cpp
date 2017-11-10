@@ -3,6 +3,7 @@
 #define GLFW_INCLUDE_ES31
 #include <GLFW/glfw3.h>
 #include <Python.h>
+#include <iostream>
 #include "shaders.h"
 #include "buffers.h"
 
@@ -101,8 +102,8 @@ static PyObject* WrapFillBuffer(PyObject *module, PyObject **args, Py_ssize_t na
 	int BufferState = PyObject_GetBuffer(args[1], &DataView, PyBUF_CONTIG_RO);
 	if (BufferState > -1)
 	{
-            Py_ssize_t ByteSize = DataView.itemsize * DataView.len;
-	    FillBuffer(BufferId, ByteSize, DataView.buf, GL_STATIC_DRAW);
+	    // item count == DataView.len / DataView.itemsize
+	    FillBuffer(BufferId, DataView.len, DataView.buf, GL_STATIC_DRAW);
 	    PyBuffer_Release(&DataView);
 	}
     }
