@@ -12,7 +12,8 @@ module = Extension('glfw_test',
                        'src/test.cpp',
                        'src/util.cpp',
                        'src/shaders.cpp',
-                       'src/buffers.cpp'],
+                       'src/buffers.cpp',
+                       'src/pdqdrawable.cpp'],
                    extra_compile_args = ['-std=c++14'],
                    extra_link_args = linker_args)
 

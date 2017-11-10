@@ -6,6 +6,7 @@
 #include <iostream>
 #include "shaders.h"
 #include "buffers.h"
+#include "pdqdrawable.h"
 
 
 bool bSetupCompleted = false;
@@ -111,6 +112,19 @@ static PyObject* WrapFillBuffer(PyObject *module, PyObject **args, Py_ssize_t na
 }
 
 
+static PyObject* WrapNaiveDraw(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
+{
+    if (nargs == 3)
+    {
+        GLuint BufferId = PyLong_AsLong(args[0]);
+	GLuint Offset = PyLong_AsLong(args[1]);
+	GLuint Range = PyLong_AsLong(args[2]);
+	NaiveDraw(BufferId, Offset, Range);
+    }
+    Py_RETURN_NONE;
+}
+
+
 static PyMethodDef ThroughputMethods[] = {
     {"setup", (PyCFunction)SetupContext, METH_FASTCALL, NULL},
     {"teardown", (PyCFunction)TeardownContext, METH_FASTCALL, NULL},
@@ -120,6 +134,7 @@ static PyMethodDef ThroughputMethods[] = {
     {"create_buffer", (PyCFunction)WrapCreateBuffer, METH_FASTCALL, NULL},
     {"delete_buffer", (PyCFunction)WrapDeleteBuffer, METH_FASTCALL, NULL},
     {"fill_buffer", (PyCFunction)WrapFillBuffer, METH_FASTCALL, NULL},
+    {"naive_draw", (PyCFunction)WrapNaiveDraw, METH_FASTCALL, NULL},
     {NULL, NULL, 0, NULL}
 };
 
