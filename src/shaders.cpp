@@ -199,7 +199,7 @@ GLuint BuildShaderProgram(const string VertexSource, const string FragmentSource
     else
     {
 	// raise an error
-	std::cout << "Something went horribly wrong:\n" << Program->ErrorString << "\n";
+	RaiseError(Program->ErrorString.data());
 	return 0;
     }
 }
