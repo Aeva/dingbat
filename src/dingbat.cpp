@@ -149,14 +149,14 @@ static PyMethodDef ThroughputMethods[] = {
 
 static struct PyModuleDef ModuleDef = {
     PyModuleDef_HEAD_INIT,
-    "glfw_test",
+    "dingbat",
     "",
     -1,
     ThroughputMethods
 };
 
 
-PyMODINIT_FUNC PyInit_glfw_test(void)
+PyMODINIT_FUNC PyInit_dingbat(void)
 {
     PyObject *Module = PyModule_Create(&ModuleDef);
     return Module;
