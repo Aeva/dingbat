@@ -1,11 +1,36 @@
 
 #define GLFW_INCLUDE_ES31
 #include <GLFW/glfw3.h>
+#include <unordered_map>
 #include <functional>
+#include <iostream>
+#include <sstream>
 #include <string>
+#include <memory>
 #include "util.h"
 #include "shaders.h"
 
+using std::shared_ptr;
+using std::make_shared;
+using std::string;
+
+std::unordered_map<GLuint, shared_ptr<ShaderProgram>> ShaderPrograms;
+
+
+std::hash<std::string> StringHasher;
+size_t ShaderStageHash(const string ShaderSource, const GLenum ShaderType)
+{
+    string TypeString;
+    if (ShaderType == GL_VERTEX_SHADER)
+    {
+	TypeString = "VS";
+    }
+    else if (ShaderType == GL_FRAGMENT_SHADER)
+    {
+	TypeString = "FS";
+    }
+    return StringHasher(TypeString + ShaderSource);
+}
 
 
 
@@ -16,10 +41,9 @@
 // The methods "CheckShaderStatus", and "CheckProgramStatus" are
 // provided as aliases for the two intended configurations.
 //
-typedef std::function<void(char*)> ErrorHandler;
 template<void (*GetObjectIv)(GLuint, GLenum, GLint*),
 	 void (*GetObjectInfoLog)(GLuint, GLsizei, GLsizei*, GLchar*)>
-bool CheckStatus(GLuint ObjectId, GLenum StatusEnum, ErrorHandler ErrorCallback)
+string CheckStatus(GLuint ObjectId, GLenum StatusEnum)
 {
     GLint StatusValue;
     GetObjectIv(ObjectId, StatusEnum, &StatusValue);
@@ -29,116 +53,131 @@ bool CheckStatus(GLuint ObjectId, GLenum StatusEnum, ErrorHandler ErrorCallback)
 	GetObjectIv(ObjectId, GL_INFO_LOG_LENGTH, &LogLength);
         if (LogLength)
         {
-            std::string ErrorLog(LogLength, 0);
+            string ErrorLog(LogLength, 0);
 	    GetObjectInfoLog(ObjectId, LogLength, NULL, (char*) ErrorLog.data());
-	    ErrorCallback((char*) ErrorLog.data());
+	    return ErrorLog;
         }
 	else
 	{
-            ErrorCallback(nullptr);
+	    return string("An unknown error occured.");
 	}
-        return false;
+    }
+    return string();
+}
+inline string CheckShaderStatus(GLuint ObjectId, GLenum StatusEnum)
+{
+    return CheckStatus<glGetShaderiv, glGetShaderInfoLog>(ObjectId, StatusEnum);
+}
+inline string CheckProgramStatus(GLuint ObjectId, GLenum StatusEnum)
+{
+    return CheckStatus<glGetProgramiv, glGetProgramInfoLog>(ObjectId, StatusEnum);
+}
+
+
+
+
+ShaderStage::ShaderStage(const string ShaderSource, const GLenum _ShaderType)
+{
+    bIsValid = false;
+    ShaderType = _ShaderType;
+    ShaderHash = ShaderStageHash(ShaderSource, ShaderType);
+    ShaderId = glCreateShader(ShaderType);
+    if (ShaderId)
+    {
+	const GLchar* SourcePtr = ShaderSource.data();
+	glShaderSource(ShaderId, 1, &SourcePtr, NULL);
+	glCompileShader(ShaderId);
+	ErrorString = CheckShaderStatus(ShaderId, GL_COMPILE_STATUS);
+	bIsValid = ErrorString.empty();
     }
     else
     {
-        return true;
+	CheckforGlError();
+	ErrorString = string("glCreateShader returned 0.");
     }
-}
-inline bool CheckShaderStatus(GLuint ObjectId, GLenum StatusEnum, ErrorHandler ErrorCallback)
-{
-    return CheckStatus<glGetShaderiv, glGetShaderInfoLog>(ObjectId, StatusEnum, ErrorCallback);
-}
-inline bool CheckProgramStatus(GLuint ObjectId, GLenum StatusEnum, ErrorHandler ErrorCallback)
-{
-    return CheckStatus<glGetProgramiv, glGetProgramInfoLog>(ObjectId, StatusEnum, ErrorCallback);
+
+    std::cout << "Created shader stage " << ShaderId << "\n";
 }
 
 
 
 
-const char* ShaderTypeHint(GLenum ShaderType)
+ShaderStage::~ShaderStage()
 {
-    if (ShaderType == GL_VERTEX_SHADER)
-    {
-        return "Vertex Shader";
-    }
-    if (ShaderType == GL_FRAGMENT_SHADER)
-    {
-        return "Fragment Shader";
-    }
-    return "Unknown Shader Type";
-}
-
-
-
-
-//
-// Compiles a shader stage, and returns the handle if successful or
-// zero if compilation failed.  If failed, this will also raise a
-// python error message.
-//
-GLuint CompileShader(const char* ShaderSource, GLenum ShaderType)
-{
-    GLuint ShaderId = glCreateShader(ShaderType);
-    if (!ShaderId)
-    {
-        RaiseError(ShaderTypeHint(ShaderType), "glCreateShader returned 0.");
-	return 0;
-    }
-    glShaderSource(ShaderId, 1, &ShaderSource, NULL);
-    glCompileShader(ShaderId);
-
-    CheckShaderStatus(ShaderId, GL_COMPILE_STATUS, [&ShaderId, &ShaderType](const char* ErrorLog)
+    if (ShaderId)
     {
 	glDeleteShader(ShaderId);
-	ShaderId = 0;
-	RaiseError(ShaderTypeHint(ShaderType), ErrorLog);
-    });
+    }
 
-    return ShaderId;
+    std::cout << "Deleted shader stage " << ShaderId << "\n";
 }
 
 
 
 
-//
-// Links a shader program, and returns the handle if successful or
-// zero if link or validation failed.  If failed, this will also raise
-// a python error message.
-//
-GLuint LinkShaderProgram(GLuint VertexShaderId, GLuint FragmentShaderId)
+ShaderProgram::ShaderProgram(const string VertexSource, const string FragmentSource)
 {
-    GLuint ProgramId = glCreateProgram();
-    if (!ProgramId)
-    {
-        RaiseError("glCreateProgram returned 0.");
-	return 0;
-    }
-    glAttachShader(ProgramId, VertexShaderId);
-    glAttachShader(ProgramId, FragmentShaderId);
-    glLinkProgram(ProgramId);
+    bIsValid = false;
+    ProgramId = 0;
+    VertexShader = make_shared<ShaderStage>(VertexSource, GL_VERTEX_SHADER);
+    FragmentShader = make_shared<ShaderStage>(FragmentSource, GL_FRAGMENT_SHADER);
 
-    CheckProgramStatus(ProgramId, GL_LINK_STATUS, [&ProgramId](const char* ErrorLog)
+    if (VertexShader->bIsValid && FragmentShader->bIsValid)
+    {
+	ProgramId = glCreateProgram();
+	if (ProgramId)
+	{
+	    glAttachShader(ProgramId, VertexShader->ShaderId);
+	    glAttachShader(ProgramId, FragmentShader->ShaderId);
+
+	    glLinkProgram(ProgramId);
+	    ErrorString = CheckProgramStatus(ProgramId, GL_LINK_STATUS);
+	    
+	    if (ErrorString.empty())
+	    {
+		glValidateProgram(ProgramId);
+		ErrorString = CheckProgramStatus(ProgramId, GL_VALIDATE_STATUS);
+		
+		bIsValid = ErrorString.empty();
+	    }
+	}
+	else
+	{
+	    ErrorString = string("glCreateProgram returned 0.");
+	}
+    }
+    else
+    {
+	std::ostringstream ErrorStream;
+	ErrorStream << "Shader program failed to compile:\n";
+	if (!VertexShader->bIsValid)
+	{
+	    ErrorStream << "VERTEX SHADER ERROR:\n"
+			<< VertexShader->ErrorString << "\n";
+	}
+	if (!FragmentShader->bIsValid)
+	{
+	    ErrorStream << "FRAGMENT SHADER ERROR:\n"
+			<< FragmentShader->ErrorString << "\n";
+	}
+	ErrorString = ErrorStream.str();
+    }
+
+    std::cout << "Created shader program " << ProgramId << "\n";
+}
+
+
+
+
+ShaderProgram::~ShaderProgram()
+{
+    VertexShader.reset();
+    FragmentShader.reset();
+    if (ProgramId)
     {
 	glDeleteProgram(ProgramId);
-	ProgramId = 0;
-	RaiseError("Shader Program Linker", ErrorLog);
-    });
-
-    if (!ProgramId)
-    {
-        return 0;
     }
-
-    glValidateProgram(ProgramId);
-    CheckProgramStatus(ProgramId, GL_VALIDATE_STATUS, [&ProgramId](const char* ErrorLog)
-    {
-	glDeleteProgram(ProgramId);
-	ProgramId = 0;
-	RaiseError("Shader Program Validation", ErrorLog);
-    });
-
-    return ProgramId;
+    std::cout << "Deleted shader program " << ProgramId << "\n";
 }
 
 
@@ -148,22 +187,19 @@ GLuint LinkShaderProgram(GLuint VertexShaderId, GLuint FragmentShaderId)
 // Shader program compilation interface.  Returns the program handle
 // if successful, otherwise returns zero and raises an error.
 //
-GLuint BuildShaderProgram(const char* VertexSource, const char* FragmentSource)
+GLuint BuildShaderProgram(const string VertexSource, const string FragmentSource)
 {
-    GLuint VertexShaderId = CompileShader(VertexSource, GL_VERTEX_SHADER);
-    if (!VertexShaderId)
+    auto Program = make_shared<ShaderProgram>(VertexSource, FragmentSource);
+    if (Program->bIsValid)
     {
-        return 0;
+	ShaderPrograms[Program->ProgramId] = Program;
+	std::cout << "Returning ProgramId: " << Program->ProgramId << "\n";
+	return Program->ProgramId;
     }
-    GLuint FragmentShaderId = CompileShader(FragmentSource, GL_FRAGMENT_SHADER);
-    if (!FragmentShaderId)
+    else
     {
-        return 0;
+	// raise an error
+	std::cout << "Something went horribly wrong:\n" << Program->ErrorString << "\n";
+	return 0;
     }
-    GLuint ShaderProgramId = LinkShaderProgram(VertexShaderId, FragmentShaderId);
-    if (!ShaderProgramId)
-    {
-        return 0;
-    }
-    return ShaderProgramId;
 }

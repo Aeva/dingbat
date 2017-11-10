@@ -4,15 +4,23 @@
 #include <GLFW/glfw3.h>
 #include <Python.h>
 #include <iostream>
+#include <string>
 #include "shaders.h"
 #include "buffers.h"
 #include "pdqdrawable.h"
+
+
+using std::string;
+
+
 
 
 void WindowCloseCallback(GLFWwindow* window)
 {
     PyErr_SetInterrupt();   
 }
+
+
 
 
 bool bSetupCompleted = false;
@@ -41,6 +49,8 @@ static PyObject* SetupContext(PyObject *module, PyObject **args, Py_ssize_t narg
 }
 
 
+
+
 static PyObject* TeardownContext(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
 {
     if (bSetupCompleted)
@@ -51,6 +61,8 @@ static PyObject* TeardownContext(PyObject *module, PyObject **args, Py_ssize_t n
     }
     Py_RETURN_NONE;
 }
+
+
 
 
 static PyObject* SwapBuffers(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
@@ -64,16 +76,20 @@ static PyObject* SwapBuffers(PyObject *module, PyObject **args, Py_ssize_t nargs
 }
 
 
+
+
 static PyObject* BuildShader(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
 {
     if (nargs == 2)
     {
-        const char* VertexSource = (const char*)PyUnicode_DATA(args[0]);
-        const char* FragmentSource = (const char*)PyUnicode_DATA(args[1]);
+	const string VertexSource = string((const char*)PyUnicode_DATA(args[0]));
+	const string FragmentSource = string((const char*)PyUnicode_DATA(args[1]));
 	return PyLong_FromLong(BuildShaderProgram(VertexSource, FragmentSource));
     }
     Py_RETURN_NONE;
 }
+
+
 
 
 static PyObject* ActivateShader(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
@@ -84,10 +100,14 @@ static PyObject* ActivateShader(PyObject *module, PyObject **args, Py_ssize_t na
 }
 
 
+
+
 static PyObject* WrapCreateBuffer(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
 {
     return PyLong_FromLong(CreateBuffer(GL_ARRAY_BUFFER));
 }
+
+
 
 
 static PyObject* WrapDeleteBuffer(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
@@ -99,6 +119,8 @@ static PyObject* WrapDeleteBuffer(PyObject *module, PyObject **args, Py_ssize_t 
     }
     Py_RETURN_NONE;
 }
+
+
 
 
 static PyObject* WrapFillBuffer(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
@@ -120,6 +142,8 @@ static PyObject* WrapFillBuffer(PyObject *module, PyObject **args, Py_ssize_t na
 }
 
 
+
+
 static PyObject* WrapNaiveDraw(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
 {
     if (nargs == 3)
@@ -131,6 +155,8 @@ static PyObject* WrapNaiveDraw(PyObject *module, PyObject **args, Py_ssize_t nar
     }
     Py_RETURN_NONE;
 }
+
+
 
 
 static PyMethodDef ThroughputMethods[] = {
@@ -147,6 +173,8 @@ static PyMethodDef ThroughputMethods[] = {
 };
 
 
+
+
 static struct PyModuleDef ModuleDef = {
     PyModuleDef_HEAD_INIT,
     "dingbat",
@@ -154,6 +182,8 @@ static struct PyModuleDef ModuleDef = {
     -1,
     ThroughputMethods
 };
+
+
 
 
 PyMODINIT_FUNC PyInit_dingbat(void)
