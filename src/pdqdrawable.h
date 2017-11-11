@@ -1,4 +1,4 @@
 
 #pragma once
 
-void NaiveDraw(GLuint BufferId, GLuint Offset, GLuint Range);
+void NaiveDraw(GLuint *AttributeBuffers, GLuint Offset, GLuint Range);

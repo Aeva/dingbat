@@ -171,12 +171,19 @@ static PyObject* WrapFillBuffer(PyObject *module, PyObject **args, Py_ssize_t na
 
 static PyObject* WrapNaiveDraw(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
 {
-    if (nargs == 3)
+    if (nargs >= 3)
     {
-        GLuint BufferId = PyLong_AsLong(args[0]);
-	GLuint Offset = PyLong_AsLong(args[1]);
-	GLuint Range = PyLong_AsLong(args[2]);
-	NaiveDraw(BufferId, Offset, Range);
+	GLuint Offset = PyLong_AsLong(args[0]);
+	GLuint Range = PyLong_AsLong(args[1]);
+	int BufferCount = nargs-2;
+	GLuint* Buffers = (GLuint*)malloc(sizeof(GLuint) * (BufferCount + 1));
+	for (int i=0; i< BufferCount; i+=1)
+	{
+	    Buffers[i] = PyLong_AsLong(args[i+2]);
+	}
+	Buffers[BufferCount] = 0;
+	NaiveDraw(Buffers, Offset, Range);
+	free(Buffers);
     }
     Py_RETURN_NONE;
 }
