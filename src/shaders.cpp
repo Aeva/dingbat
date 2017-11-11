@@ -1,12 +1,7 @@
 
-#define GLFW_INCLUDE_ES31
-#include <GLFW/glfw3.h>
-#include <unordered_map>
 #include <functional>
 #include <iostream>
 #include <sstream>
-#include <string>
-#include <memory>
 #include "util.h"
 #include "shaders.h"
 
@@ -159,6 +154,28 @@ ShaderProgram::ShaderProgram(const string VertexSource, const string FragmentSou
     }
 
     std::cout << "Created shader program " << ProgramId << "\n";
+
+
+    if (bIsValid)
+    {
+	GLint AttributeCount;
+	glGetProgramiv(ProgramId, GL_ACTIVE_ATTRIBUTES, &AttributeCount);
+	if (AttributeCount)
+	{
+	    GLint AttributeMaxLength;
+	    glGetProgramiv(ProgramId, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &AttributeMaxLength);
+
+	    for (int AttrIndex=0; AttrIndex<AttributeCount; AttrIndex+=1)
+	    {
+		Attribute Attr;
+		Attr.Slot = AttrIndex;
+		string Name = string(AttributeMaxLength, 0);
+		glGetActiveAttrib(ProgramId, AttrIndex, AttributeMaxLength, NULL, &Attr.Size, &Attr.Type, (char*) Name.data());
+		Name.resize(Name.find_first_of('\0')); // trim extra null charcaters
+		Attributes[Name] = Attr;
+	    }
+	}
+    }
 }
 
 

@@ -1,5 +1,8 @@
 
 #pragma once
+#define GLFW_INCLUDE_ES31
+#include <GLFW/glfw3.h>
+#include <unordered_map>
 #include <string>
 #include <memory>
 
@@ -25,6 +28,16 @@ public:
 
 
 
+struct Attribute
+{
+    GLint Slot;
+    GLint Size;
+    GLenum Type;
+};
+
+
+
+
 class ShaderProgram
 {
 public:
@@ -36,6 +49,8 @@ public:
 
     shared_ptr<ShaderStage> VertexShader;
     shared_ptr<ShaderStage> FragmentShader;
+
+    std::unordered_map<string, Attribute> Attributes;
 };
 
 
