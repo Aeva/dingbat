@@ -35,8 +35,14 @@ if __name__ == "__main__":
         ]
         
         # https://docs.python.org/3.7/library/array.html
-        dingbat.fill_buffer(position_buffer,array.array('f', clip_space_triangle))
+        dingbat.fill_buffer(position_buffer, array.array('f', clip_space_triangle))
         dingbat.fill_buffer(color_buffer, array.array('f', vertex_colors))
+
+        technicolor_rainbow_triangle_of_justice = [
+            dingbat.bind_attr_buffer(position_buffer, 0, 3),
+            dingbat.bind_attr_buffer(color_buffer, 1, 3),
+            dingbat.bind_draw_arrays(0, 9),
+        ]
         
         last = time.monotonic()
         while True:
@@ -44,10 +50,8 @@ if __name__ == "__main__":
             delta = now - last
             last = now
             #print ("delta: %s" % str(1/delta))
-            
-            dingbat.naive_draw(0, len(clip_space_triangle),
-                               position_buffer, color_buffer)
-            
+
+            dingbat.batch_draw(*technicolor_rainbow_triangle_of_justice)
             dingbat.swap_buffers()
         
     except KeyboardInterrupt:

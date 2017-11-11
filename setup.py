@@ -13,7 +13,7 @@ module = Extension('dingbat',
                        'src/util.cpp',
                        'src/shaders.cpp',
                        'src/buffers.cpp',
-                       'src/pdqdrawable.cpp'],
+                       'src/painter.cpp'],
                    extra_compile_args = ['-std=c++14'],
                    extra_link_args = linker_args)
 
