@@ -16,6 +16,8 @@ if __name__ == "__main__":
             with open("test.frag", "r") as frag_file:
                 prog = dingbat.build_shader(vert_file.read(), frag_file.read())
         assert(prog)
+        attrs = dingbat.shader_attrs(prog)
+        attrs = dict(zip(attrs, range(len(attrs))))
                 
         dingbat.activate_shader(prog)
 
@@ -39,8 +41,8 @@ if __name__ == "__main__":
         dingbat.fill_buffer(color_buffer, array.array('f', vertex_colors))
 
         technicolor_rainbow_triangle_of_justice = [
-            dingbat.bind_attr_buffer(position_buffer, 0, 3),
-            dingbat.bind_attr_buffer(color_buffer, 1, 3),
+            dingbat.bind_attr_buffer(position_buffer, attrs["VertexPosition"], 3),
+            dingbat.bind_attr_buffer(color_buffer, attrs["VertexColor"], 3),
             dingbat.bind_draw_arrays(0, 9),
         ]
         
