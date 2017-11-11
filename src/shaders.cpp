@@ -64,14 +64,9 @@ string CheckStatus(GLuint ObjectId, GLenum StatusEnum)
     }
     return string();
 }
-inline string CheckShaderStatus(GLuint ObjectId, GLenum StatusEnum)
-{
-    return CheckStatus<glGetShaderiv, glGetShaderInfoLog>(ObjectId, StatusEnum);
-}
-inline string CheckProgramStatus(GLuint ObjectId, GLenum StatusEnum)
-{
-    return CheckStatus<glGetProgramiv, glGetProgramInfoLog>(ObjectId, StatusEnum);
-}
+// Aliases
+string (&CheckShaderStatus)(GLuint, GLenum) = CheckStatus<glGetShaderiv, glGetShaderInfoLog>;
+string (&CheckProgramStatus)(GLuint, GLenum) = CheckStatus<glGetProgramiv, glGetProgramInfoLog>;
 
 
 
