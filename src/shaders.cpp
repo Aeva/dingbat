@@ -1,5 +1,6 @@
 
 #include <functional>
+#include <unordered_map>
 #include <iostream>
 #include <sstream>
 #include "util.h"
@@ -9,7 +10,10 @@ using std::shared_ptr;
 using std::make_shared;
 using std::string;
 
+
 std::unordered_map<GLuint, shared_ptr<ShaderProgram>> ShaderPrograms;
+
+
 
 
 std::hash<std::string> StringHasher;
@@ -169,10 +173,10 @@ ShaderProgram::ShaderProgram(const string VertexSource, const string FragmentSou
 	    {
 		Attribute Attr;
 		Attr.Slot = AttrIndex;
-		string Name = string(AttributeMaxLength, 0);
-		glGetActiveAttrib(ProgramId, AttrIndex, AttributeMaxLength, NULL, &Attr.Size, &Attr.Type, (char*) Name.data());
-		Name.resize(Name.find_first_of('\0')); // trim extra null charcaters
-		Attributes[Name] = Attr;
+		Attr.Name = string(AttributeMaxLength, 0);
+		glGetActiveAttrib(ProgramId, AttrIndex, AttributeMaxLength, NULL, &Attr.Size, &Attr.Type, (char*) Attr.Name.data());
+		Attr.Name.resize(Attr.Name.find_first_of('\0')); // trim extra null charcaters
+		Attributes.push_back(Attr);
 	    }
 	}
     }
@@ -199,19 +203,27 @@ ShaderProgram::~ShaderProgram()
 // Shader program compilation interface.  Returns the program handle
 // if successful, otherwise returns zero and raises an error.
 //
-GLuint BuildShaderProgram(const string VertexSource, const string FragmentSource)
+shared_ptr<ShaderProgram> BuildShaderProgram(const string VertexSource, const string FragmentSource)
 {
     auto Program = make_shared<ShaderProgram>(VertexSource, FragmentSource);
     if (Program->bIsValid)
     {
 	ShaderPrograms[Program->ProgramId] = Program;
 	std::cout << "Returning ProgramId: " << Program->ProgramId << "\n";
-	return Program->ProgramId;
     }
     else
     {
 	// raise an error
 	RaiseError(Program->ErrorString.data());
-	return 0;
     }
+    return Program;
+}
+
+
+
+
+//
+shared_ptr<ShaderProgram> GetShaderProgram(GLuint ProgramId)
+{
+    return ShaderPrograms[ProgramId];
 }

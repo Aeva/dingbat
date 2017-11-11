@@ -16,6 +16,10 @@ if __name__ == "__main__":
             with open("test.frag", "r") as frag_file:
                 prog = dingbat.build_shader(vert_file.read(), frag_file.read())
         assert(prog)
+
+        shader_attrs = dingbat.shader_attrs(prog);
+        print(shader_attrs)
+                
         dingbat.activate_shader(prog)
 
         buffer_a = dingbat.create_buffer()

@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <Python.h>
 #include <iostream>
+#include <vector>
 #include <string>
 #include "shaders.h"
 #include "buffers.h"
@@ -11,6 +12,7 @@
 
 
 using std::string;
+using std::shared_ptr;
 
 
 
@@ -84,7 +86,7 @@ static PyObject* BuildShader(PyObject *module, PyObject **args, Py_ssize_t nargs
     {
 	const string VertexSource = string((const char*)PyUnicode_DATA(args[0]));
 	const string FragmentSource = string((const char*)PyUnicode_DATA(args[1]));
-	return PyLong_FromLong(BuildShaderProgram(VertexSource, FragmentSource));
+	return PyLong_FromLong(BuildShaderProgram(VertexSource, FragmentSource)->ProgramId);
     }
     Py_RETURN_NONE;
 }
@@ -96,6 +98,29 @@ static PyObject* ActivateShader(PyObject *module, PyObject **args, Py_ssize_t na
 {
     GLuint ShaderProgramId = PyLong_AsLong(args[0]);
     glUseProgram(ShaderProgramId);
+    Py_RETURN_NONE;
+}
+
+
+
+
+static PyObject* GetShaderAttrs(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
+{
+    GLuint ShaderProgramId = PyLong_AsLong(args[0]);
+    shared_ptr<ShaderProgram> Shader = GetShaderProgram(ShaderProgramId);
+    
+    if (Shader)
+    {
+	int AttrCount = Shader->Attributes.size();
+	PyObject* Tuple = PyTuple_New(AttrCount);
+	for (int a=0; a<AttrCount; a++)
+	{
+	    string Name = Shader->Attributes[a].Name;
+	    PyTuple_SET_ITEM(Tuple, a, PyUnicode_FromString(Name.data()));
+	}
+	return Tuple;
+    }
+
     Py_RETURN_NONE;
 }
 
@@ -163,11 +188,15 @@ static PyMethodDef ThroughputMethods[] = {
     {"setup", (PyCFunction)SetupContext, METH_FASTCALL, NULL},
     {"teardown", (PyCFunction)TeardownContext, METH_FASTCALL, NULL},
     {"swap_buffers", (PyCFunction)SwapBuffers, METH_FASTCALL, NULL},
+
     {"build_shader", (PyCFunction)BuildShader, METH_FASTCALL, NULL},
     {"activate_shader", (PyCFunction)ActivateShader, METH_FASTCALL, NULL},
+    {"shader_attrs", (PyCFunction)GetShaderAttrs, METH_FASTCALL, NULL},
+
     {"create_buffer", (PyCFunction)WrapCreateBuffer, METH_FASTCALL, NULL},
     {"delete_buffer", (PyCFunction)WrapDeleteBuffer, METH_FASTCALL, NULL},
     {"fill_buffer", (PyCFunction)WrapFillBuffer, METH_FASTCALL, NULL},
+
     {"naive_draw", (PyCFunction)WrapNaiveDraw, METH_FASTCALL, NULL},
     {NULL, NULL, 0, NULL}
 };
