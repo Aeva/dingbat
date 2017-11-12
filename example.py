@@ -17,7 +17,8 @@ if __name__ == "__main__":
                 prog = dingbat.build_shader(vert_file.read(), frag_file.read())
         assert(prog)
         attrs = dingbat.shader_attrs(prog)
-        attrs = dict(zip(attrs, range(len(attrs))))
+        uniforms = dingbat.shader_uniforms(prog)
+        print(attrs, uniforms)
                 
         dingbat.activate_shader(prog)
 

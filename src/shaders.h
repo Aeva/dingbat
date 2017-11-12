@@ -39,6 +39,18 @@ struct Attribute
 
 
 
+// https://www.khronos.org/registry/OpenGL-Refpages/es3.1/html/glGetActiveUniformsiv.xhtml
+struct Uniform
+{
+    string Name;
+    GLenum Type;
+    GLint Offset;
+    GLint ArrayLength;
+ };
+
+
+
+
 class ShaderProgram
 {
 public:
@@ -52,6 +64,11 @@ public:
     shared_ptr<ShaderStage> FragmentShader;
 
     std::vector<Attribute> Attributes;
+    std::vector<Uniform> Uniforms;
+
+private:
+    void GatherAttributes();
+    void GatherUniforms();
 };
 
 

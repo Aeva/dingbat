@@ -162,21 +162,63 @@ ShaderProgram::ShaderProgram(const string VertexSource, const string FragmentSou
 
     if (bIsValid)
     {
-	GLint AttributeCount;
-	glGetProgramiv(ProgramId, GL_ACTIVE_ATTRIBUTES, &AttributeCount);
-	if (AttributeCount)
-	{
-	    GLint AttributeMaxLength;
-	    glGetProgramiv(ProgramId, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &AttributeMaxLength);
+	GatherAttributes();
+	GatherUniforms();
+    }
+}
 
-	    for (int AttrIndex=0; AttrIndex<AttributeCount; AttrIndex+=1)
+
+
+
+void ShaderProgram::GatherAttributes()
+{
+    GLint AttributeCount;
+    glGetProgramiv(ProgramId, GL_ACTIVE_ATTRIBUTES, &AttributeCount);
+    if (AttributeCount)
+    {
+	GLint AttributeMaxLength;
+	glGetProgramiv(ProgramId, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &AttributeMaxLength);
+
+	for (int AttrIndex=0; AttrIndex<AttributeCount; AttrIndex+=1)
+	{
+	    Attribute Attr;
+	    Attr.Slot = AttrIndex;
+	    Attr.Name = string(AttributeMaxLength, 0);
+	    glGetActiveAttrib(ProgramId, AttrIndex, AttributeMaxLength, NULL, &Attr.Size, &Attr.Type, (char*) Attr.Name.data());
+	    Attr.Name.resize(Attr.Name.find_first_of('\0')); // trim extra null charcaters
+	    Attributes.push_back(Attr);
+	}
+    }
+}
+
+
+
+
+void ShaderProgram::GatherUniforms()
+{
+    GLint UnifromCount;
+    glGetProgramInterfaceiv(ProgramId, GL_UNIFORM, GL_ACTIVE_RESOURCES, &UnifromCount);
+    if (UnifromCount)
+    {
+	const GLenum Query[4] = {GL_BLOCK_INDEX, GL_NAME_LENGTH, GL_TYPE, GL_LOCATION};
+
+	for (int u = 0; u < UnifromCount; u++)
+	{
+	    GLint UniformInfo[4];
+	    glGetProgramResourceiv(ProgramId, GL_UNIFORM, u, 4, Query, 4, NULL, UniformInfo);
+	    if (UniformInfo[0] == -1)
 	    {
-		Attribute Attr;
-		Attr.Slot = AttrIndex;
-		Attr.Name = string(AttributeMaxLength, 0);
-		glGetActiveAttrib(ProgramId, AttrIndex, AttributeMaxLength, NULL, &Attr.Size, &Attr.Type, (char*) Attr.Name.data());
-		Attr.Name.resize(Attr.Name.find_first_of('\0')); // trim extra null charcaters
-		Attributes.push_back(Attr);
+		// Uniform is in the default block.
+		Uniform Entry = {
+		    string(UniformInfo[1], 0),
+		    (GLenum) UniformInfo[2],
+		    UniformInfo[3]
+		};
+
+		glGetProgramResourceName(ProgramId, GL_UNIFORM, u, UniformInfo[1], NULL, (char*)Entry.Name.data());
+		Entry.Name.resize(Entry.Name.find_first_of('\0')); // trim extra null charcaters
+
+		Uniforms.push_back(Entry);
 	    }
 	}
     }
