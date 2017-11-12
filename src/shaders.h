@@ -44,6 +44,7 @@ struct Uniform
 {
     string Name;
     GLenum Type;
+    GLint Block;
     GLint Offset;
     GLint ArrayLength;
  };
@@ -65,6 +66,8 @@ public:
 
     std::vector<Attribute> Attributes;
     std::vector<Uniform> Uniforms;
+
+    Uniform* GetUniformByOffset(GLint Offest);
 
 private:
     void GatherAttributes();

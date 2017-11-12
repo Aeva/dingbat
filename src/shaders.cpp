@@ -170,6 +170,20 @@ ShaderProgram::ShaderProgram(const string VertexSource, const string FragmentSou
 
 
 
+ShaderProgram::~ShaderProgram()
+{
+    VertexShader.reset();
+    FragmentShader.reset();
+    if (ProgramId)
+    {
+	glDeleteProgram(ProgramId);
+    }
+    std::cout << "Deleted shader program " << ProgramId << "\n";
+}
+
+
+
+
 void ShaderProgram::GatherAttributes()
 {
     GLint AttributeCount;
@@ -200,24 +214,30 @@ void ShaderProgram::GatherUniforms()
     glGetProgramInterfaceiv(ProgramId, GL_UNIFORM, GL_ACTIVE_RESOURCES, &UnifromCount);
     if (UnifromCount)
     {
-	const GLenum Query[4] = {GL_BLOCK_INDEX, GL_NAME_LENGTH, GL_TYPE, GL_LOCATION};
+	const GLenum Query[4] = {GL_NAME_LENGTH, GL_BLOCK_INDEX, GL_LOCATION, GL_TYPE};
 
 	for (int u = 0; u < UnifromCount; u++)
 	{
 	    GLint UniformInfo[4];
 	    glGetProgramResourceiv(ProgramId, GL_UNIFORM, u, 4, Query, 4, NULL, UniformInfo);
-	    if (UniformInfo[0] == -1)
+	    GLint& NameLength = UniformInfo[0];
+	    GLint& BlockIndex = UniformInfo[1];
+	    GLint& Offset = UniformInfo[2];
+	    GLint& Type = UniformInfo[3];
+	    
+	    if (BlockIndex == -1)
 	    {
 		// Uniform is in the default block.
 		Uniform Entry = {
 		    string(UniformInfo[1], 0),
-		    (GLenum) UniformInfo[2],
-		    UniformInfo[3]
+		    Type,
+		    BlockIndex,
+		    Offset,
+		    ArrayLength,
 		};
 
-		glGetProgramResourceName(ProgramId, GL_UNIFORM, u, UniformInfo[1], NULL, (char*)Entry.Name.data());
+		glGetProgramResourceName(ProgramId, GL_UNIFORM, u, NameLength, NULL, (char*)Entry.Name.data());
 		Entry.Name.resize(Entry.Name.find_first_of('\0')); // trim extra null charcaters
-
 		Uniforms.push_back(Entry);
 	    }
 	}
@@ -227,15 +247,16 @@ void ShaderProgram::GatherUniforms()
 
 
 
-ShaderProgram::~ShaderProgram()
+int ShaderProgram::GetUniformByOffset(GLint Offest);
 {
-    VertexShader.reset();
-    FragmentShader.reset();
-    if (ProgramId)
+    for (size_t i=0; i<Uniforms.size(); i++)
     {
-	glDeleteProgram(ProgramId);
+	if (Uniforms[i]->Offset == Offset)
+	{
+	    return i;
+	}
     }
-    std::cout << "Deleted shader program " << ProgramId << "\n";
+    return -1;
 }
 
 
