@@ -230,10 +230,10 @@ void ShaderProgram::GatherUniforms()
 		// Uniform is in the default block.
 		Uniform Entry = {
 		    string(UniformInfo[1], 0),
-		    Type,
+		    (GLenum) Type,
 		    BlockIndex,
 		    Offset,
-		    ArrayLength,
+		    1, //ArrayLength,
 		};
 
 		glGetProgramResourceName(ProgramId, GL_UNIFORM, u, NameLength, NULL, (char*)Entry.Name.data());
@@ -242,21 +242,6 @@ void ShaderProgram::GatherUniforms()
 	    }
 	}
     }
-}
-
-
-
-
-int ShaderProgram::GetUniformByOffset(GLint Offest);
-{
-    for (size_t i=0; i<Uniforms.size(); i++)
-    {
-	if (Uniforms[i]->Offset == Offset)
-	{
-	    return i;
-	}
-    }
-    return -1;
 }
 
 

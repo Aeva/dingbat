@@ -1,6 +1,6 @@
 
 
-#define GLFW_INCLUDE_ES31
+#define GLFW_INCLUDE_ES3
 #include <GLFW/glfw3.h>
 #include <Python.h>
 #include <iostream>

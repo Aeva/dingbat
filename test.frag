@@ -1,7 +1,12 @@
+#version 300 es
 
-varying vec3 Color;
+
+in highp vec3 Color;
+out highp vec4 FinalColor;
+
+
 
 void main()
 {
-  gl_FragColor = vec4(Color, 1.0);
+    FinalColor = vec4(Color, 1.0);
 }

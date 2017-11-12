@@ -67,8 +67,6 @@ public:
     std::vector<Attribute> Attributes;
     std::vector<Uniform> Uniforms;
 
-    Uniform* GetUniformByOffset(GLint Offest);
-
 private:
     void GatherAttributes();
     void GatherUniforms();

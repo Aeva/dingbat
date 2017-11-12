@@ -1,8 +1,13 @@
+#version 300 es
 
-attribute vec3 VertexPosition;
-attribute vec3 VertexColor;
 
-varying vec3 Color;
+layout(location = 0) in highp vec3 VertexPosition;
+layout(location = 1) in highp vec3 VertexColor;
+
+out highp vec3 Color;
+
+
+
 
 void main()
 {
