@@ -8,6 +8,7 @@
 
 
 using std::string;
+using std::vector;
 using std::shared_ptr;
 
 
@@ -39,15 +40,24 @@ struct Attribute
 
 
 
-// https://www.khronos.org/registry/OpenGL-Refpages/es3.1/html/glGetActiveUniformsiv.xhtml
-struct Uniform
+struct UniformEntry
 {
     string Name;
     GLenum Type;
-    GLint Block;
-    GLint Offset;
-    GLint ArrayLength;
- };
+    GLint ArraySize;
+    GLint BlockOffset;
+    GLint BlockArrayStride;
+    GLint BlockMatrixStride;
+};
+
+
+
+
+struct UniformBlock
+{
+    string Name;
+    vector<UniformEntry> Uniforms;
+};
 
 
 
@@ -64,12 +74,17 @@ public:
     shared_ptr<ShaderStage> VertexShader;
     shared_ptr<ShaderStage> FragmentShader;
 
-    std::vector<Attribute> Attributes;
-    std::vector<Uniform> Uniforms;
+    vector<Attribute> Attributes;
+    vector<UniformBlock> UniformBlocks;
 
 private:
     void GatherAttributes();
     void GatherUniforms();
+    vector<GLint> ResourceQuery(GLenum Interface, GLuint ResourceIndex, GLenum Query, GLsizei ItemCount);
+    vector<GLint> ResourceQuery(GLenum Interface, GLuint ResourceIndex, vector<GLenum> Query);
+    GLint ResourceQuery(GLenum Interface, GLuint ResourceIndex, const GLenum Query);
+    GLint InterfaceProperty(GLenum Interface, GLenum Property);
+    string ResourceName(GLenum Interface, GLuint ResourceIndex);
 };
 
 

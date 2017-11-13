@@ -9,6 +9,7 @@
 using std::shared_ptr;
 using std::make_shared;
 using std::string;
+using std::vector;
 
 
 std::unordered_map<GLuint, shared_ptr<ShaderProgram>> ShaderPrograms;
@@ -184,6 +185,58 @@ ShaderProgram::~ShaderProgram()
 
 
 
+vector<GLint> ShaderProgram::ResourceQuery(GLenum Interface, GLuint ResourceIndex, GLenum Query, GLsizei ItemCount)
+{
+    vector<GLint> Result(ItemCount);
+    glGetProgramResourceiv(ProgramId, Interface, ResourceIndex, 1, &Query, ItemCount, NULL, Result.data());
+    return Result;
+}
+
+
+
+
+vector<GLint> ShaderProgram::ResourceQuery(GLenum Interface, GLuint ResourceIndex, vector<GLenum> Query)
+{
+    vector<GLint> Result(Query.size());
+    glGetProgramResourceiv(ProgramId, Interface, ResourceIndex, Query.size(), (const GLenum*) Query.data(), Query.size(), NULL, Result.data());
+    return Result;
+}
+
+
+
+
+GLint ShaderProgram::ResourceQuery(GLenum Interface, GLuint ResourceIndex, const GLenum Query)
+{
+    GLint Value;
+    glGetProgramResourceiv(ProgramId, Interface, ResourceIndex, 1, &Query, 1, NULL, &Value);
+    return Value;
+}
+
+
+
+
+GLint ShaderProgram::InterfaceProperty(GLenum Interface, GLenum Property)
+{
+    GLint Value;
+    glGetProgramInterfaceiv(ProgramId, Interface, Property, &Value);
+    return Value;
+}
+
+
+
+
+string ShaderProgram::ResourceName(GLenum Interface, GLuint ResourceIndex)
+{
+    GLint NameLength = ResourceQuery(Interface, ResourceIndex, GL_NAME_LENGTH);
+    string Name = string(NameLength, 0);
+    glGetProgramResourceName(ProgramId, Interface, ResourceIndex, NameLength, NULL, (char*) Name.data());
+    Name.resize(Name.find_first_of('\0'));
+    return Name;
+}
+
+
+
+
 void ShaderProgram::GatherAttributes()
 {
     GLint AttributeCount;
@@ -210,37 +263,39 @@ void ShaderProgram::GatherAttributes()
 
 void ShaderProgram::GatherUniforms()
 {
-    GLint UnifromCount;
-    glGetProgramInterfaceiv(ProgramId, GL_UNIFORM, GL_ACTIVE_RESOURCES, &UnifromCount);
-    if (UnifromCount)
+    GLint BlockCount = InterfaceProperty(GL_UNIFORM_BLOCK, GL_ACTIVE_RESOURCES);
+    if (BlockCount)
     {
-	const GLenum Query[4] = {GL_NAME_LENGTH, GL_BLOCK_INDEX, GL_LOCATION, GL_TYPE};
-
-	for (int u = 0; u < UnifromCount; u++)
-	{
-	    GLint UniformInfo[4];
-	    glGetProgramResourceiv(ProgramId, GL_UNIFORM, u, 4, Query, 4, NULL, UniformInfo);
-	    GLint& NameLength = UniformInfo[0];
-	    GLint& BlockIndex = UniformInfo[1];
-	    GLint& Offset = UniformInfo[2];
-	    GLint& Type = UniformInfo[3];
+    	for (int BlockIndex = 0; BlockIndex < BlockCount; BlockIndex++)
+    	{
+	    GLint ActiveUniforms = ResourceQuery(GL_UNIFORM_BLOCK, BlockIndex, GL_NUM_ACTIVE_VARIABLES);
 	    
-	    if (BlockIndex == -1)
-	    {
-		// Uniform is in the default block.
-		Uniform Entry = {
-		    string(UniformInfo[1], 0),
-		    (GLenum) Type,
-		    BlockIndex,
-		    Offset,
-		    1, //ArrayLength,
-		};
+    	    if (ActiveUniforms)
+    	    {
+		UniformBlock NewBlock;
+		NewBlock.Name = ResourceName(GL_UNIFORM_BLOCK, BlockIndex);
+		
+    		vector<GLint> UniformIndices = ResourceQuery(GL_UNIFORM_BLOCK, BlockIndex, GL_ACTIVE_VARIABLES, ActiveUniforms);
+    		for (int IndexIndex = 0; IndexIndex < ActiveUniforms; IndexIndex++)
+    		{
+    		    GLint UniformIndex = UniformIndices[IndexIndex];
+    		    vector<GLint> UniformInfo = ResourceQuery(
+			GL_UNIFORM, UniformIndex,
+			{GL_TYPE, GL_ARRAY_SIZE, GL_OFFSET, GL_ARRAY_STRIDE, GL_MATRIX_STRIDE});
 
-		glGetProgramResourceName(ProgramId, GL_UNIFORM, u, NameLength, NULL, (char*)Entry.Name.data());
-		Entry.Name.resize(Entry.Name.find_first_of('\0')); // trim extra null charcaters
-		Uniforms.push_back(Entry);
-	    }
-	}
+		    UniformEntry NewEntry;
+		    NewEntry.Name = ResourceName(GL_UNIFORM, UniformIndex);
+		    NewEntry.Type = (GLenum) UniformInfo[0];
+		    NewEntry.ArraySize = UniformInfo[1];
+		    NewEntry.BlockOffset = UniformInfo[2];
+		    NewEntry.BlockArrayStride = UniformInfo[3];
+		    NewEntry.BlockMatrixStride = UniformInfo[3];
+		    NewBlock.Uniforms.push_back(NewEntry);
+    		}
+
+		UniformBlocks.push_back(NewBlock);
+    	    }
+    	}
     }
 }
 

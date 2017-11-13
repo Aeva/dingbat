@@ -129,21 +129,26 @@ static PyObject* GetShaderAttrs(PyObject *module, PyObject **args, Py_ssize_t na
 
 
 
-static PyObject* GetShaderUniforms(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
+static PyObject* GetShaderUniformBlocks(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
 {
     GLuint ShaderProgramId = PyLong_AsLong(args[0]);
     shared_ptr<ShaderProgram> Shader = GetShaderProgram(ShaderProgramId);
     
     if (Shader)
     {
-	int UniCount = Shader->Uniforms.size();
-
+	int BlockCount = Shader->UniformBlocks.size();
 	PyObject* Dict = PyDict_New();
-	for (int u=0; u<UniCount; u++)
+	for (int b=0; b<BlockCount; b++)
 	{
-	    string Name = Shader->Uniforms[u].Name;
-	    long Offset = Shader->Uniforms[u].Offset;
-	    PyDict_SetItemString(Dict, Name.data(), PyLong_FromLong(Offset));
+	    string BlockName = Shader->UniformBlocks[b].Name;
+	    int UniCount = Shader->UniformBlocks[b].Uniforms.size();
+	    PyObject* Tuple = PyTuple_New(UniCount);
+	    for (int u=0; u<UniCount; u++)
+	    {
+		string UniName = Shader->UniformBlocks[b].Uniforms[u].Name;
+		PyTuple_SET_ITEM(Tuple, u, PyUnicode_FromString(UniName.data()));
+	    }
+	    PyDict_SetItemString(Dict, BlockName.data(), Tuple);
 	}
 	return Dict;
     }
@@ -262,7 +267,7 @@ static PyMethodDef ThroughputMethods[] = {
     {"build_shader", (PyCFunction)BuildShader, METH_FASTCALL, NULL},
     {"activate_shader", (PyCFunction)ActivateShader, METH_FASTCALL, NULL},
     {"shader_attrs", (PyCFunction)GetShaderAttrs, METH_FASTCALL, NULL},
-    {"shader_uniforms", (PyCFunction)GetShaderUniforms, METH_FASTCALL, NULL},
+    {"shader_uniform_blocks", (PyCFunction)GetShaderUniformBlocks, METH_FASTCALL, NULL},
 
     {"create_buffer", (PyCFunction)WrapCreateBuffer, METH_FASTCALL, NULL},
     {"delete_buffer", (PyCFunction)WrapDeleteBuffer, METH_FASTCALL, NULL},
