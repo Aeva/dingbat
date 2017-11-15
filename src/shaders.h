@@ -56,6 +56,9 @@ struct UniformEntry
 struct UniformBlock
 {
     string Name;
+    GLuint ProgramId;
+    GLuint BlockIndex;
+    GLuint BufferSize;
     vector<UniformEntry> Uniforms;
 };
 

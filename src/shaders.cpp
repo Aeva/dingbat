@@ -274,6 +274,9 @@ void ShaderProgram::GatherUniforms()
     	    {
 		UniformBlock NewBlock;
 		NewBlock.Name = ResourceName(GL_UNIFORM_BLOCK, BlockIndex);
+		NewBlock.ProgramId = ProgramId;
+		NewBlock.BlockIndex = BlockIndex;
+		NewBlock.BufferSize = ResourceQuery(GL_UNIFORM_BLOCK, BlockIndex, GL_BUFFER_DATA_SIZE);
 		
     		vector<GLint> UniformIndices = ResourceQuery(GL_UNIFORM_BLOCK, BlockIndex, GL_ACTIVE_VARIABLES, ActiveUniforms);
     		for (int IndexIndex = 0; IndexIndex < ActiveUniforms; IndexIndex++)

@@ -17,8 +17,6 @@ if __name__ == "__main__":
                 prog = dingbat.build_shader(vert_file.read(), frag_file.read())
         assert(prog)
         attrs = dingbat.shader_attrs(prog)
-        uniform_blocks = dingbat.shader_uniform_blocks(prog)
-        print(attrs, uniform_blocks)
                 
         dingbat.activate_shader(prog)
 
@@ -36,6 +34,13 @@ if __name__ == "__main__":
             0.0, 1.0, 1.0,
             1.0, 0.0, 1.0
         ]
+
+
+        uniform_buffer = dingbat.create_buffer()
+        uniform_block = dingbat.shader_uniform_blocks(prog)["SomeBlock"]
+        dingbat.fill_uniform_block(uniform_buffer, uniform_block, 0.5)
+        print(attrs, uniform_block)
+
         
         # https://docs.python.org/3.7/library/array.html
         dingbat.fill_buffer(position_buffer, array.array('f', clip_space_triangle))
@@ -44,6 +49,7 @@ if __name__ == "__main__":
         technicolor_rainbow_triangle_of_justice = [
             dingbat.bind_attr_buffer(position_buffer, attrs["VertexPosition"], 3),
             dingbat.bind_attr_buffer(color_buffer, attrs["VertexColor"], 3),
+            dingbat.bind_uniform_buffer(uniform_buffer, uniform_block),
             dingbat.bind_draw_arrays(0, 9),
         ]
         

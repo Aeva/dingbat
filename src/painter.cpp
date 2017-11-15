@@ -39,6 +39,22 @@ int BindAttributeBuffer(
 
 
 
+int BindUniformBuffer(
+    GLuint BufferId,
+    GLuint ProgramId,
+    GLuint ProgramBlockIndex)
+{
+    return RegisterBinding([=]()
+    {
+	glBindBuffer(GL_UNIFORM_BUFFER, BufferId);
+	glUniformBlockBinding(ProgramId, ProgramBlockIndex, ProgramBlockIndex);
+	CheckforGlError();
+    });
+}
+
+
+
+
 int BindDrawArrays(
     GLenum PrimitiveType,
     GLuint Offset,

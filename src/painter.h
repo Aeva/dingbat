@@ -24,6 +24,14 @@ int BindAttributeBuffer(
 
 
 
+int BindUniformBuffer(
+    GLuint BufferId,
+    GLuint ProgramId,
+    GLuint ProgramBlockIndex);
+
+
+
+
 int BindDrawArrays(
     GLenum PrimitiveType,
     GLuint Offset,

@@ -14,6 +14,7 @@
 
 using std::string;
 using std::shared_ptr;
+using std::vector;
 
 
 
@@ -141,14 +142,18 @@ static PyObject* GetShaderUniformBlocks(PyObject *module, PyObject **args, Py_ss
 	for (int b=0; b<BlockCount; b++)
 	{
 	    string BlockName = Shader->UniformBlocks[b].Name;
-	    int UniCount = Shader->UniformBlocks[b].Uniforms.size();
-	    PyObject* Tuple = PyTuple_New(UniCount);
-	    for (int u=0; u<UniCount; u++)
-	    {
-		string UniName = Shader->UniformBlocks[b].Uniforms[u].Name;
-		PyTuple_SET_ITEM(Tuple, u, PyUnicode_FromString(UniName.data()));
-	    }
-	    PyDict_SetItemString(Dict, BlockName.data(), Tuple);
+	    // int UniCount = Shader->UniformBlocks[b].Uniforms.size();
+	    // PyObject* Tuple = PyTuple_New(UniCount);
+	    // for (int u=0; u<UniCount; u++)
+	    // {
+	    // 	string UniName = Shader->UniformBlocks[b].Uniforms[u].Name;
+	    // 	PyTuple_SET_ITEM(Tuple, u, PyUnicode_FromString(UniName.data()));
+	    // }
+	    // PyDict_SetItemString(Dict, BlockName.data(), Tuple);
+
+	    // return address to uniform block
+	    long BlockAddress = (long)&(Shader->UniformBlocks[b]);
+	    PyDict_SetItemString(Dict, BlockName.data(), PyLong_FromLong(BlockAddress));
 	}
 	return Dict;
     }
@@ -205,6 +210,127 @@ static PyObject* WrapFillBuffer(PyObject *module, PyObject **args, Py_ssize_t na
 
 
 
+static PyObject* WrapFillUniformBlock(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
+{
+    GLuint BufferId = PyLong_AsLong(args[0]);
+    UniformBlock* BlockPtr = (UniformBlock*) PyLong_AsLong(args[1]);
+
+    vector<UniformEntry>* Uniforms = &(BlockPtr->Uniforms);
+    GLuint BufferSize = BlockPtr->BufferSize;
+
+    void* Blob = malloc(BufferSize);
+    float* Writer = (float*) Blob;
+    Py_ssize_t ArgOffset = 2;
+
+    for (size_t i=0; i<Uniforms->size(); i++)
+    {
+	// TODO : guard this in a not terrible way
+	if (ArgOffset >= nargs)
+	{
+	    break;
+	}
+	
+	UniformEntry* Uniform = &((*Uniforms)[i]);
+	if (Uniform->Type == GL_FLOAT)
+	{
+	    Writer[0] = (float)PyFloat_AsDouble(args[ArgOffset]);
+	    Writer++;
+	    ArgOffset++;
+	}
+	else if (Uniform->Type == GL_FLOAT_VEC2)
+	{
+	    Writer[0] = (float)PyFloat_AsDouble(args[ArgOffset]);
+	    Writer[1] = (float)PyFloat_AsDouble(args[ArgOffset+1]);
+	    Writer += 2;
+	    ArgOffset += 2;
+	}
+	else if (Uniform->Type == GL_FLOAT_VEC3)
+	{
+	    Writer[0] = (float)PyFloat_AsDouble(args[ArgOffset]);
+	    Writer[1] = (float)PyFloat_AsDouble(args[ArgOffset+1]);
+	    Writer[2] = (float)PyFloat_AsDouble(args[ArgOffset+2]);
+	    Writer += 4; // intentional
+	    ArgOffset += 3;
+	}
+	else if (Uniform->Type == GL_FLOAT_VEC4)
+	{
+	    Writer[0] = (float)PyFloat_AsDouble(args[ArgOffset]);
+	    Writer[1] = (float)PyFloat_AsDouble(args[ArgOffset+1]);
+	    Writer[2] = (float)PyFloat_AsDouble(args[ArgOffset+2]);
+	    Writer[3] = (float)PyFloat_AsDouble(args[ArgOffset+3]);
+	    Writer += 4;
+	    ArgOffset += 4;
+	}
+	else if (Uniform->Type == GL_FLOAT_MAT2)
+	{
+	    Writer[0] = (float)PyFloat_AsDouble(args[ArgOffset]);
+	    Writer[1] = (float)PyFloat_AsDouble(args[ArgOffset+1]);
+	    Writer[2] = 0.0;
+	    Writer[3] = 0.0;
+	    Writer[4] = (float)PyFloat_AsDouble(args[ArgOffset+2]);
+	    Writer[5] = (float)PyFloat_AsDouble(args[ArgOffset+3]);
+	    Writer[6] = 0.0;
+	    Writer[7] = 0.0;
+	    Writer += 8;
+	    ArgOffset += 4;
+	}
+	else if (Uniform->Type == GL_FLOAT_MAT3)
+	{
+	    Writer[0] = (float)PyFloat_AsDouble(args[ArgOffset]);
+	    Writer[1] = (float)PyFloat_AsDouble(args[ArgOffset+1]);
+	    Writer[2] = (float)PyFloat_AsDouble(args[ArgOffset+2]);
+	    Writer[3] = 0.0;
+	    Writer[4] = (float)PyFloat_AsDouble(args[ArgOffset+3]);
+	    Writer[5] = (float)PyFloat_AsDouble(args[ArgOffset+4]);
+	    Writer[6] = (float)PyFloat_AsDouble(args[ArgOffset+5]);
+	    Writer[7] = 0.0;
+	    Writer[8] = (float)PyFloat_AsDouble(args[ArgOffset+6]);
+	    Writer[9] = (float)PyFloat_AsDouble(args[ArgOffset+7]);
+	    Writer[10] = (float)PyFloat_AsDouble(args[ArgOffset+8]);
+	    Writer[11] = 0.0;
+	    Writer += 12;
+	    ArgOffset += 6;
+	}
+	else if (Uniform->Type == GL_FLOAT_MAT4)
+	{
+	    Writer[0] = (float)PyFloat_AsDouble(args[ArgOffset]);
+	    Writer[1] = (float)PyFloat_AsDouble(args[ArgOffset+1]);
+	    Writer[2] = (float)PyFloat_AsDouble(args[ArgOffset+2]);
+	    Writer[3] = (float)PyFloat_AsDouble(args[ArgOffset+3]);
+
+	    Writer[4] = (float)PyFloat_AsDouble(args[ArgOffset+4]);
+	    Writer[5] = (float)PyFloat_AsDouble(args[ArgOffset+5]);
+	    Writer[6] = (float)PyFloat_AsDouble(args[ArgOffset+6]);
+	    Writer[7] = (float)PyFloat_AsDouble(args[ArgOffset+7]);
+
+	    Writer[8] = (float)PyFloat_AsDouble(args[ArgOffset+8]);
+	    Writer[9] = (float)PyFloat_AsDouble(args[ArgOffset+9]);
+	    Writer[10] = (float)PyFloat_AsDouble(args[ArgOffset+10]);
+	    Writer[11] = (float)PyFloat_AsDouble(args[ArgOffset+11]);
+
+	    Writer[12] = (float)PyFloat_AsDouble(args[ArgOffset+12]);
+	    Writer[13] = (float)PyFloat_AsDouble(args[ArgOffset+13]);
+	    Writer[14] = (float)PyFloat_AsDouble(args[ArgOffset+14]);
+	    Writer[15] = (float)PyFloat_AsDouble(args[ArgOffset+15]);
+
+	    Writer += 12;
+	    ArgOffset += 16;
+	}
+	else
+	{
+	    std::cout << "Non-float uniforms not supported yet.\n";
+	}
+    }
+    
+    FillBuffer(BufferId, BufferSize, Blob, GL_DYNAMIC_DRAW);
+    free(Blob);
+    CheckforGlError();
+    Py_RETURN_NONE;
+}
+
+
+
+
 static PyObject* WrapBindAttributeBuffer(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
 {
     if (nargs == 3)
@@ -221,6 +347,17 @@ static PyObject* WrapBindAttributeBuffer(PyObject *module, PyObject **args, Py_s
 
     RaiseError("Invalid number of arguments.");
     Py_RETURN_NONE;
+}
+
+
+
+
+static PyObject* WrapBindUniformBuffer(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
+{
+    GLuint BufferId = PyLong_AsLong(args[0]);
+    UniformBlock* BlockPtr = (UniformBlock*) PyLong_AsLong(args[1]);
+    int Handle = BindUniformBuffer(BufferId, BlockPtr->ProgramId, BlockPtr->BlockIndex);
+    return PyLong_FromLong(Handle);
 }
 
 
@@ -272,8 +409,10 @@ static PyMethodDef ThroughputMethods[] = {
     {"create_buffer", (PyCFunction)WrapCreateBuffer, METH_FASTCALL, NULL},
     {"delete_buffer", (PyCFunction)WrapDeleteBuffer, METH_FASTCALL, NULL},
     {"fill_buffer", (PyCFunction)WrapFillBuffer, METH_FASTCALL, NULL},
+    {"fill_uniform_block", (PyCFunction)WrapFillUniformBlock, METH_FASTCALL, NULL},
 
     {"bind_attr_buffer", (PyCFunction)WrapBindAttributeBuffer, METH_FASTCALL, NULL},
+    {"bind_uniform_buffer", (PyCFunction)WrapBindUniformBuffer, METH_FASTCALL, NULL},
     {"bind_draw_arrays", (PyCFunction)WrapBindDrawArrays, METH_FASTCALL, NULL},
     {"batch_draw", (PyCFunction)WrapBatchDraw, METH_FASTCALL, NULL},
     {NULL, NULL, 0, NULL}
