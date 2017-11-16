@@ -82,6 +82,15 @@ static PyObject* SwapBuffers(PyObject *module, PyObject **args, Py_ssize_t nargs
 
 
 
+static PyObject* Clear(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    Py_RETURN_NONE;
+}
+
+
+
+
 static PyObject* BuildShader(PyObject *module, PyObject **args, Py_ssize_t nargs, PyObject *kwnames)
 {
     if (nargs == 2)
@@ -356,7 +365,7 @@ static PyObject* WrapBindUniformBuffer(PyObject *module, PyObject **args, Py_ssi
 {
     GLuint BufferId = PyLong_AsLong(args[0]);
     UniformBlock* BlockPtr = (UniformBlock*) PyLong_AsLong(args[1]);
-    int Handle = BindUniformBuffer(BufferId, BlockPtr->ProgramId, BlockPtr->BlockIndex);
+    int Handle = BindUniformBuffer(BufferId, BlockPtr->ProgramId, BlockPtr->BlockIndex, 0, BlockPtr->BufferSize);
     return PyLong_FromLong(Handle);
 }
 
@@ -400,6 +409,7 @@ static PyMethodDef ThroughputMethods[] = {
     {"setup", (PyCFunction)SetupContext, METH_FASTCALL, NULL},
     {"teardown", (PyCFunction)TeardownContext, METH_FASTCALL, NULL},
     {"swap_buffers", (PyCFunction)SwapBuffers, METH_FASTCALL, NULL},
+    {"clear", (PyCFunction)Clear, METH_FASTCALL, NULL},
 
     {"build_shader", (PyCFunction)BuildShader, METH_FASTCALL, NULL},
     {"activate_shader", (PyCFunction)ActivateShader, METH_FASTCALL, NULL},

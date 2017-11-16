@@ -2,6 +2,7 @@
 
 import sys
 import time
+import math
 import array
 import dingbat
 
@@ -38,9 +39,8 @@ if __name__ == "__main__":
 
         uniform_buffer = dingbat.create_buffer()
         uniform_block = dingbat.shader_uniform_blocks(prog)["SomeBlock"]
-        dingbat.fill_uniform_block(uniform_buffer, uniform_block, 0.5)
+        dingbat.fill_uniform_block(uniform_buffer, uniform_block, 0.0)
         print(attrs, uniform_block)
-
         
         # https://docs.python.org/3.7/library/array.html
         dingbat.fill_buffer(position_buffer, array.array('f', clip_space_triangle))
@@ -58,8 +58,12 @@ if __name__ == "__main__":
             now = time.monotonic()
             delta = now - last
             last = now
-            #print ("delta: %s" % str(1/delta))
+            print ("delta: %s" % str(1/delta))
 
+            offset = math.sin(now * 1.5) * 0.6
+            dingbat.fill_uniform_block(uniform_buffer, uniform_block, offset)
+
+            dingbat.clear()
             dingbat.batch_draw(*technicolor_rainbow_triangle_of_justice)
             dingbat.swap_buffers()
         

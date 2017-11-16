@@ -27,7 +27,9 @@ int BindAttributeBuffer(
 int BindUniformBuffer(
     GLuint BufferId,
     GLuint ProgramId,
-    GLuint ProgramBlockIndex);
+    GLuint ProgramBlockIndex,
+    GLintptr Offset,
+    GLsizeiptr Size);
 
 
 

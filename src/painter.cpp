@@ -42,12 +42,14 @@ int BindAttributeBuffer(
 int BindUniformBuffer(
     GLuint BufferId,
     GLuint ProgramId,
-    GLuint ProgramBlockIndex)
+    GLuint ProgramBlockIndex,
+    GLintptr Offset,
+    GLsizeiptr Size)
 {
     return RegisterBinding([=]()
     {
-	glBindBuffer(GL_UNIFORM_BUFFER, BufferId);
 	glUniformBlockBinding(ProgramId, ProgramBlockIndex, ProgramBlockIndex);
+	glBindBufferRange(GL_UNIFORM_BUFFER, ProgramBlockIndex, BufferId, Offset, Size);
 	CheckforGlError();
     });
 }
