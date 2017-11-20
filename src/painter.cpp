@@ -1,9 +1,17 @@
 
 #define GLFW_INCLUDE_ES31
+#include <GLFW/glfw3.h>
+
 #include <iostream>
+#include <functional>
+#include <vector>
+
 #include "painter.h"
+#include "shaders.h"
 #include "util.h"
 
+using BindingInterface = std::function<void()>;
+using BindingList = std::vector<BindingInterface>;
 
 BindingList SavedBindings;
 
@@ -79,4 +87,69 @@ void BatchDraw(int* Batch, int Count)
     {
 	SavedBindings[Batch[i]]();
     }
+}
+
+
+
+
+PYTHON_API(WrapBindAttributeBuffer)
+{
+    if (nargs == 3)
+    {
+	GLuint BufferId = PyLong_AsLong(args[0]);
+	GLuint AttrIndex = PyLong_AsLong(args[1]);
+	GLint VectorSize = PyLong_AsLong(args[2]);
+	GLenum Type = GL_FLOAT;
+	GLboolean Normalized = false;
+	GLsizei Stride = 0;
+	int Handle = BindAttributeBuffer(BufferId, AttrIndex, VectorSize, Type, Normalized, Stride);
+	return PyLong_FromLong(Handle);
+    }
+
+    RaiseError("Invalid number of arguments.");
+    Py_RETURN_NONE;
+}
+
+
+
+
+PYTHON_API(WrapBindUniformBuffer)
+{
+    GLuint BufferId = PyLong_AsLong(args[0]);
+    UniformBlock* BlockPtr = (UniformBlock*) PyLong_AsLong(args[1]);
+    int Handle = BindUniformBuffer(BufferId, BlockPtr->ProgramId, BlockPtr->BlockIndex, 0, BlockPtr->BufferSize);
+    return PyLong_FromLong(Handle);
+}
+
+
+
+
+PYTHON_API(WrapBindDrawArrays)
+{
+    if (nargs == 2)
+    {
+	GLenum PrimitiveType = GL_TRIANGLES;
+	GLuint Offset = PyLong_AsLong(args[0]);
+	GLuint Range = PyLong_AsLong(args[1]);
+	int Handle = BindDrawArrays(PrimitiveType, Offset, Range);
+	return PyLong_FromLong(Handle);
+    }
+
+    RaiseError("Invalid number of arguments.");
+    Py_RETURN_NONE;
+}
+
+
+
+
+PYTHON_API(WrapBatchDraw)
+{
+    int* Batch = (int*)malloc(sizeof(int) * nargs);
+    for (int i=0; i<nargs; i++)
+    {
+	Batch[i] = PyLong_AsLong(args[i]);
+    }
+    BatchDraw(Batch, nargs);
+    free(Batch);
+    Py_RETURN_NONE;
 }

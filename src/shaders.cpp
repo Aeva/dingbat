@@ -333,3 +333,75 @@ shared_ptr<ShaderProgram> GetShaderProgram(GLuint ProgramId)
 {
     return ShaderPrograms[ProgramId];
 }
+
+
+
+
+PYTHON_API(BuildShader)
+{
+    if (nargs == 2)
+    {
+	const string VertexSource = string((const char*)PyUnicode_DATA(args[0]));
+	const string FragmentSource = string((const char*)PyUnicode_DATA(args[1]));
+	return PyLong_FromLong(BuildShaderProgram(VertexSource, FragmentSource)->ProgramId);
+    }
+    RaiseError("Invalid number of arguments.");
+    Py_RETURN_NONE;
+}
+
+
+
+
+PYTHON_API(ActivateShader)
+{
+    GLuint ShaderProgramId = PyLong_AsLong(args[0]);
+    glUseProgram(ShaderProgramId);
+    Py_RETURN_NONE;
+}
+
+
+
+
+PYTHON_API(GetShaderAttrs)
+{
+    GLuint ShaderProgramId = PyLong_AsLong(args[0]);
+    shared_ptr<ShaderProgram> Shader = GetShaderProgram(ShaderProgramId);
+    
+    if (Shader)
+    {
+	int AttrCount = Shader->Attributes.size();
+	PyObject* Dict = PyDict_New();
+	for (int a=0; a<AttrCount; a++)
+	{
+	    string Name = Shader->Attributes[a].Name;
+	    PyDict_SetItemString(Dict, Name.data(), PyLong_FromLong(a));
+	}
+	return Dict;
+    }
+
+    Py_RETURN_NONE;
+}
+
+
+
+
+PYTHON_API(GetShaderUniformBlocks)
+{
+    GLuint ShaderProgramId = PyLong_AsLong(args[0]);
+    shared_ptr<ShaderProgram> Shader = GetShaderProgram(ShaderProgramId);
+    
+    if (Shader)
+    {
+	int BlockCount = Shader->UniformBlocks.size();
+	PyObject* Dict = PyDict_New();
+	for (int b=0; b<BlockCount; b++)
+	{
+	    string BlockName = Shader->UniformBlocks[b].Name;
+	    long BlockAddress = (long)&(Shader->UniformBlocks[b]);
+	    PyDict_SetItemString(Dict, BlockName.data(), PyLong_FromLong(BlockAddress));
+	}
+	return Dict;
+    }
+
+    Py_RETURN_NONE;
+}

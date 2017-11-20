@@ -1,45 +1,14 @@
-
 #pragma once
+#include "python_api.h"
 
-#define GLFW_INCLUDE_ES31
-#include <GLFW/glfw3.h>
-#include <functional>
-#include <vector>
-
-
-using BindingInterface = std::function<void()>;
-using BindingList = std::vector<BindingInterface>;
+#define PAINTER_BINDINGS \
+    {"bind_attr_buffer", (PyCFunction)WrapBindAttributeBuffer, METH_FASTCALL, NULL}, \
+    {"bind_uniform_buffer", (PyCFunction)WrapBindUniformBuffer, METH_FASTCALL, NULL}, \
+    {"bind_draw_arrays", (PyCFunction)WrapBindDrawArrays, METH_FASTCALL, NULL}, \
+    {"batch_draw", (PyCFunction)WrapBatchDraw, METH_FASTCALL, NULL},
 
 
-
-
-int BindAttributeBuffer(
-    GLuint BufferId,
-    GLuint AttrIndex,
-    GLint VectorSize,
-    GLenum Type,
-    GLboolean Normalized,
-    GLsizei Stride);
-
-
-
-
-int BindUniformBuffer(
-    GLuint BufferId,
-    GLuint ProgramId,
-    GLuint ProgramBlockIndex,
-    GLintptr Offset,
-    GLsizeiptr Size);
-
-
-
-
-int BindDrawArrays(
-    GLenum PrimitiveType,
-    GLuint Offset,
-    GLuint Range);
-
-
-
-
-void BatchDraw(int* Batch, int Count);
+PYTHON_API(WrapBindAttributeBuffer);
+PYTHON_API(WrapBindUniformBuffer);
+PYTHON_API(WrapBindDrawArrays);
+PYTHON_API(WrapBatchDraw);

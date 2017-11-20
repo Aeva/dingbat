@@ -2,14 +2,21 @@
 #pragma once
 #define GLFW_INCLUDE_ES31
 #include <GLFW/glfw3.h>
+#include "python_api.h"
+
 #include <vector>
 #include <string>
 #include <memory>
 
-
 using std::string;
 using std::vector;
 using std::shared_ptr;
+
+#define SHADER_BINDINGS \
+    {"build_shader", (PyCFunction)BuildShader, METH_FASTCALL, NULL}, \
+    {"activate_shader", (PyCFunction)ActivateShader, METH_FASTCALL, NULL}, \
+    {"shader_attrs", (PyCFunction)GetShaderAttrs, METH_FASTCALL, NULL}, \
+    {"shader_uniform_blocks", (PyCFunction)GetShaderUniformBlocks, METH_FASTCALL, NULL},
 
 
 
@@ -92,5 +99,7 @@ private:
 
 
 
-shared_ptr<ShaderProgram> BuildShaderProgram(const string VertexSource, const string FragmentSource);
-shared_ptr<ShaderProgram> GetShaderProgram(GLuint ProgramId);
+PYTHON_API(BuildShader);
+PYTHON_API(ActivateShader);
+PYTHON_API(GetShaderAttrs);
+PYTHON_API(GetShaderUniformBlocks);
