@@ -11,6 +11,10 @@ if __name__ == "__main__":
         print("Requires Python 3")
         exit(1)
 
+    test_handle = dingbat.create_test_handle();
+    print("DEBUG : user deletes handle object")
+    del test_handle
+    
     try:
         dingbat.setup()
         with open("test.vert", "r") as vert_file:
@@ -58,7 +62,7 @@ if __name__ == "__main__":
             now = time.monotonic()
             delta = now - last
             last = now
-            print ("delta: %s" % str(1/delta))
+            #print ("delta: %s" % str(1/delta))
 
             offset = math.sin(now * 1.5) * 0.6
             dingbat.fill_uniform_block(uniform_buffer, uniform_block, offset)
