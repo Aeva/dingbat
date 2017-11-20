@@ -1,7 +1,10 @@
 
 #include "object_handle.h"
 #include <structmember.h>
+#include <functional>
 #include <iostream>
+
+using std::function;
 
 
 PyTypeObject ObjectHandleType;
@@ -10,8 +13,8 @@ PyTypeObject ObjectHandleType;
 struct ObjectHandle
 {
     PyObject_HEAD
-    AccessorFunction AccessorHook;
-    DeleterFunction DeleterHook;
+    void* Wrapped;
+    function<void(void*)> Deleter;
 };
 
 
@@ -21,8 +24,8 @@ PyObject* ObjectHandleNew(PyTypeObject* Type, PyObject* Args, PyObject* Kwargs)
 {
     ObjectHandle* Self;
     Self = (ObjectHandle*)(Type->tp_alloc(Type, 0));
-    Self->AccessorHook = []() -> void* { return nullptr; };
-    Self->DeleterHook = []() -> void {};
+    Self->Wrapped = nullptr;
+    Self->Deleter = [](void* Wrapped) {};
     return (PyObject*)Self;
 }
 
@@ -42,7 +45,11 @@ void ObjectHandleDeAlloc(PyObject* Self)
 {
     //PyObject_GC_UnTrack(Self); // <--- segfaults?
     ObjectHandle* Handle = (ObjectHandle*)Self;
-    Handle->DeleterHook();
+    if (Handle->Wrapped)
+    {
+	Handle->Deleter(Handle->Wrapped);
+	Handle->Wrapped = nullptr;
+    }
     Py_TYPE(Self)->tp_free(Self);
 }
 
@@ -75,13 +82,17 @@ bool InitObjectHandleType(PyObject* Module)
 
 
 
-PyObject* CreateHandleObject(AccessorFunction AccessorHook, DeleterFunction DeleterHook)
+template<typename T>
+PyObject* WrapObject(shared_ptr<T> ManagedObject)
 {
     PyObject *Args = PyTuple_New(0);
     PyObject *Initialized = PyObject_CallObject((PyObject*)&ObjectHandleType, Args);
     ObjectHandle* Handle = (ObjectHandle*)Initialized;
-    Handle->AccessorHook = AccessorHook;
-    Handle->DeleterHook = DeleterHook;
+    Handle->Wrapped = (void*) new shared_ptr<T>(ManagedObject);
+    Handle->Deleter = [](void* Wrapped) mutable
+    {
+	delete (shared_ptr<T>*) Wrapped;
+    };
     Py_DECREF(Args);
     return Initialized;
 }
@@ -90,45 +101,10 @@ PyObject* CreateHandleObject(AccessorFunction AccessorHook, DeleterFunction Dele
 
 
 template<typename T>
-PyObject* CreateHandleObject(shared_ptr<T> ManagedObject)
+shared_ptr<T> AccessObject(PyObject* UserHandle)
 {
-    weak_ptr<T> Weakref(ManagedObject);
-    AccessorFunction Accessor = [Weakref]() -> void*
-    {
-	return (void*)&Weakref;
-    };
-    DeleterFunction Deleter = [ManagedObject]() mutable -> void
-    {
-	ManagedObject.reset();
-    };
-    return CreateHandleObject(Accessor, Deleter);
-}
-
-
-
-
-template<typename T>
-weak_ptr<T> GetWrappedObject(PyObject* Self)
-{
-    ObjectHandle* Handle = (ObjectHandle*) Self;
-    return *((weak_ptr<T>*)Handle->AccessorHook());
-}
-
-
-
-
-PYTHON_API(CreateTestHandle)
-{
-    AccessorFunction TestAccessor = []() -> void*
-    {
-	std::cout << "Test accessor function called!\n";
-	return nullptr;
-    };
-    DeleterFunction TestDeleter = []()
-    {
-	std::cout << "Test deleter function called!\n";
-    };
-    return CreateHandleObject(TestAccessor, TestDeleter);
+    ObjectHandle* Handle = (ObjectHandle*)UserHandle;
+    return *((shared_ptr<T>*)Handle->Wrapped);
 }
 
 
@@ -149,9 +125,8 @@ public:
 
 
 
-    
-PYTHON_API(ManagedObjectTest)
+
+PYTHON_API(CreateTestHandle)
 {
-    auto Pointer = std::make_shared<BasicManagedObject>();
-    return CreateHandleObject<BasicManagedObject>(Pointer);
+    return WrapObject<BasicManagedObject>(std::make_shared<BasicManagedObject>());
 }

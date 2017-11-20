@@ -16,7 +16,6 @@ PyMethodDef ThroughputMethods[] = {
     BUFFER_BINDINGS
     PAINTER_BINDINGS
     {"create_test_handle", (PyCFunction)CreateTestHandle, METH_FASTCALL, NULL},
-    {"create_test_handle2", (PyCFunction)ManagedObjectTest, METH_FASTCALL, NULL},
     {NULL, NULL, 0, NULL}
 };
 
