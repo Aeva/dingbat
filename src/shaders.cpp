@@ -5,14 +5,13 @@
 #include <sstream>
 #include "util.h"
 #include "shaders.h"
+#include "object_handle.h"
+
 
 using std::shared_ptr;
 using std::make_shared;
 using std::string;
 using std::vector;
-
-
-std::unordered_map<GLuint, shared_ptr<ShaderProgram>> ShaderPrograms;
 
 
 
@@ -309,44 +308,21 @@ void ShaderProgram::GatherUniforms()
 // Shader program compilation interface.  Returns the program handle
 // if successful, otherwise returns zero and raises an error.
 //
-shared_ptr<ShaderProgram> BuildShaderProgram(const string VertexSource, const string FragmentSource)
+PYTHON_API(BuildShader)
 {
+    const string VertexSource = string((const char*)PyUnicode_DATA(args[0]));
+    const string FragmentSource = string((const char*)PyUnicode_DATA(args[1]));
     auto Program = make_shared<ShaderProgram>(VertexSource, FragmentSource);
     if (Program->bIsValid)
     {
-	ShaderPrograms[Program->ProgramId] = Program;
-	std::cout << "Returning ProgramId: " << Program->ProgramId << "\n";
+	return WrapObject<ShaderProgram>(Program);
     }
     else
     {
 	// raise an error
 	RaiseError(Program->ErrorString.data());
+	Py_RETURN_NONE;
     }
-    return Program;
-}
-
-
-
-
-//
-shared_ptr<ShaderProgram> GetShaderProgram(GLuint ProgramId)
-{
-    return ShaderPrograms[ProgramId];
-}
-
-
-
-
-PYTHON_API(BuildShader)
-{
-    if (nargs == 2)
-    {
-	const string VertexSource = string((const char*)PyUnicode_DATA(args[0]));
-	const string FragmentSource = string((const char*)PyUnicode_DATA(args[1]));
-	return PyLong_FromLong(BuildShaderProgram(VertexSource, FragmentSource)->ProgramId);
-    }
-    RaiseError("Invalid number of arguments.");
-    Py_RETURN_NONE;
 }
 
 
@@ -354,7 +330,7 @@ PYTHON_API(BuildShader)
 
 PYTHON_API(ActivateShader)
 {
-    GLuint ShaderProgramId = PyLong_AsLong(args[0]);
+    GLuint ShaderProgramId = AccessObject<ShaderProgram>(args[0])->ProgramId;
     glUseProgram(ShaderProgramId);
     Py_RETURN_NONE;
 }
@@ -364,22 +340,15 @@ PYTHON_API(ActivateShader)
 
 PYTHON_API(GetShaderAttrs)
 {
-    GLuint ShaderProgramId = PyLong_AsLong(args[0]);
-    shared_ptr<ShaderProgram> Shader = GetShaderProgram(ShaderProgramId);
-    
-    if (Shader)
+    shared_ptr<ShaderProgram> Shader = AccessObject<ShaderProgram>(args[0]);
+    int AttrCount = Shader->Attributes.size();
+    PyObject* Dict = PyDict_New();
+    for (int a=0; a<AttrCount; a++)
     {
-	int AttrCount = Shader->Attributes.size();
-	PyObject* Dict = PyDict_New();
-	for (int a=0; a<AttrCount; a++)
-	{
-	    string Name = Shader->Attributes[a].Name;
-	    PyDict_SetItemString(Dict, Name.data(), PyLong_FromLong(a));
-	}
-	return Dict;
+	string Name = Shader->Attributes[a].Name;
+	PyDict_SetItemString(Dict, Name.data(), PyLong_FromLong(a));
     }
-
-    Py_RETURN_NONE;
+    return Dict;
 }
 
 
@@ -387,21 +356,15 @@ PYTHON_API(GetShaderAttrs)
 
 PYTHON_API(GetShaderUniformBlocks)
 {
-    GLuint ShaderProgramId = PyLong_AsLong(args[0]);
-    shared_ptr<ShaderProgram> Shader = GetShaderProgram(ShaderProgramId);
-    
-    if (Shader)
-    {
-	int BlockCount = Shader->UniformBlocks.size();
-	PyObject* Dict = PyDict_New();
-	for (int b=0; b<BlockCount; b++)
-	{
-	    string BlockName = Shader->UniformBlocks[b].Name;
-	    long BlockAddress = (long)&(Shader->UniformBlocks[b]);
-	    PyDict_SetItemString(Dict, BlockName.data(), PyLong_FromLong(BlockAddress));
-	}
-	return Dict;
-    }
+    shared_ptr<ShaderProgram> Shader = AccessObject<ShaderProgram>(args[0]);
 
-    Py_RETURN_NONE;
+    int BlockCount = Shader->UniformBlocks.size();
+    PyObject* Dict = PyDict_New();
+    for (int b=0; b<BlockCount; b++)
+    {
+	string BlockName = Shader->UniformBlocks[b].Name;
+	long BlockAddress = (long)&(Shader->UniformBlocks[b]);
+	PyDict_SetItemString(Dict, BlockName.data(), PyLong_FromLong(BlockAddress));
+    }
+    return Dict;
 }

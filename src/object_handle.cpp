@@ -1,21 +1,10 @@
 
 #include "object_handle.h"
 #include <structmember.h>
-#include <functional>
 #include <iostream>
-
-using std::function;
 
 
 PyTypeObject ObjectHandleType;
-
-
-struct ObjectHandle
-{
-    PyObject_HEAD
-    void* Wrapped;
-    function<void(void*)> Deleter;
-};
 
 
 
@@ -82,29 +71,15 @@ bool InitObjectHandleType(PyObject* Module)
 
 
 
-template<typename T>
-PyObject* WrapObject(shared_ptr<T> ManagedObject)
+PyObject* NewHandle(void* Wrapped, function<void(void*)>& Deleter)
 {
     PyObject *Args = PyTuple_New(0);
     PyObject *Initialized = PyObject_CallObject((PyObject*)&ObjectHandleType, Args);
     ObjectHandle* Handle = (ObjectHandle*)Initialized;
-    Handle->Wrapped = (void*) new shared_ptr<T>(ManagedObject);
-    Handle->Deleter = [](void* Wrapped) mutable
-    {
-	delete (shared_ptr<T>*) Wrapped;
-    };
+    Handle->Wrapped = Wrapped;
+    Handle->Deleter = Deleter;
     Py_DECREF(Args);
     return Initialized;
-}
-
-
-
-
-template<typename T>
-shared_ptr<T> AccessObject(PyObject* UserHandle)
-{
-    ObjectHandle* Handle = (ObjectHandle*)UserHandle;
-    return *((shared_ptr<T>*)Handle->Wrapped);
 }
 
 

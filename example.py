@@ -62,7 +62,7 @@ if __name__ == "__main__":
             now = time.monotonic()
             delta = now - last
             last = now
-            #print ("delta: %s" % str(1/delta))
+            print ("delta: %s" % str(1/delta))
 
             offset = math.sin(now * 1.5) * 0.6
             dingbat.fill_uniform_block(uniform_buffer, uniform_block, offset)
