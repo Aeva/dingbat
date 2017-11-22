@@ -1,38 +1,17 @@
 
-#define GLFW_INCLUDE_ES31
-#include <GLFW/glfw3.h>
-#include <unordered_map>
+#include "object_handle.h"
 #include <iostream>
 #include "util.h"
 #include "buffers.h"
 #include "shaders.h"
 
 
-std::unordered_map<GLuint, GLenum> BufferTypeMap;
+using std::make_shared;
 
 
-GLuint CreateBuffer(GLenum BufferType)
+
+void FillBuffer(GLenum BufferType, GLint BufferId, GLsizeiptr Size, const GLvoid *Data, GLenum UsageHint)
 {
-    GLuint BufferId;
-    glGenBuffers(1, &BufferId);
-    // CheckforGlError();
-    BufferTypeMap[BufferId] = BufferType;
-    return BufferId;
-}
-
-
-void DeleteBuffer(GLuint BufferId)
-{
-    BufferTypeMap.erase(BufferId);
-    glDeleteBuffers(1, &BufferId);
-    // CheckforGlError();
-    return;
-}
-
-
-void FillBuffer(GLint BufferId, GLsizeiptr Size, const GLvoid *Data, GLenum UsageHint)
-{
-    GLenum BufferType = BufferTypeMap[BufferId];
     glBindBuffer(BufferType, BufferId);
     // CheckforGlError();
     glBufferData(BufferType, Size, Data, UsageHint);
@@ -44,22 +23,7 @@ void FillBuffer(GLint BufferId, GLsizeiptr Size, const GLvoid *Data, GLenum Usag
 
 PYTHON_API(WrapCreateBuffer)
 {
-    return PyLong_FromLong(CreateBuffer(GL_ARRAY_BUFFER));
-    Py_RETURN_NONE;
-}
-
-
-
-
-PYTHON_API(WrapDeleteBuffer)
-{
-    if (nargs == 1)
-    {
-        GLuint BufferId = PyLong_AsLong(args[0]);
-	DeleteBuffer(BufferId);
-    }
-    RaiseError("Invalid number of arguments.");
-    Py_RETURN_NONE;
+    return WrapObject<BufferObject>(make_shared<BufferObject>(GL_ARRAY_BUFFER));
 }
 
 
@@ -67,21 +31,19 @@ PYTHON_API(WrapDeleteBuffer)
 
 PYTHON_API(WrapFillBuffer)
 {
-    if (nargs == 2)
-    {
-        GLuint BufferId = PyLong_AsLong(args[0]);
+    auto Buffer = AccessObject<BufferObject>(args[0]);
 
-	Py_buffer DataView;
-	int BufferState = PyObject_GetBuffer(args[1], &DataView, PyBUF_CONTIG_RO);
-	if (BufferState > -1)
-	{
-	    // item count == DataView.len / DataView.itemsize
-	    FillBuffer(BufferId, DataView.len, DataView.buf, GL_STATIC_DRAW);
-	    PyBuffer_Release(&DataView);
-	}
-	Py_RETURN_NONE;
+    GLuint BufferId = Buffer->BufferId;
+    GLenum BufferType = Buffer->BufferType;
+
+    Py_buffer DataView;
+    int BufferState = PyObject_GetBuffer(args[1], &DataView, PyBUF_CONTIG_RO);
+    if (BufferState > -1)
+    {
+	// item count == DataView.len / DataView.itemsize
+	FillBuffer(BufferType, BufferId, DataView.len, DataView.buf, GL_STATIC_DRAW);
+	PyBuffer_Release(&DataView);
     }
-    RaiseError("Invalid number of arguments.");
     Py_RETURN_NONE;
 }
 
@@ -90,7 +52,7 @@ PYTHON_API(WrapFillBuffer)
 
 PYTHON_API(WrapFillUniformBlock)
 {
-    GLuint BufferId = PyLong_AsLong(args[0]);
+    auto Buffer = AccessObject<BufferObject>(args[0]);
     UniformBlock* BlockPtr = (UniformBlock*) PyLong_AsLong(args[1]);
 
     vector<UniformEntry>* Uniforms = &(BlockPtr->Uniforms);
@@ -200,7 +162,7 @@ PYTHON_API(WrapFillUniformBlock)
 	}
     }
     
-    FillBuffer(BufferId, BufferSize, Blob, GL_DYNAMIC_DRAW);
+    FillBuffer(GL_UNIFORM_BUFFER, Buffer->BufferId, BufferSize, Blob, GL_DYNAMIC_DRAW);
     free(Blob);
     CheckforGlError();
     Py_RETURN_NONE;

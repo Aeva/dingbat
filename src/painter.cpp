@@ -2,12 +2,15 @@
 #define GLFW_INCLUDE_ES31
 #include <GLFW/glfw3.h>
 
+#include "object_handle.h"
+
 #include <iostream>
 #include <functional>
 #include <vector>
 
 #include "painter.h"
 #include "shaders.h"
+#include "buffers.h"
 #include "util.h"
 
 using BindingInterface = std::function<void()>;
@@ -94,20 +97,14 @@ void BatchDraw(int* Batch, int Count)
 
 PYTHON_API(WrapBindAttributeBuffer)
 {
-    if (nargs == 3)
-    {
-	GLuint BufferId = PyLong_AsLong(args[0]);
-	GLuint AttrIndex = PyLong_AsLong(args[1]);
-	GLint VectorSize = PyLong_AsLong(args[2]);
-	GLenum Type = GL_FLOAT;
-	GLboolean Normalized = false;
-	GLsizei Stride = 0;
-	int Handle = BindAttributeBuffer(BufferId, AttrIndex, VectorSize, Type, Normalized, Stride);
-	return PyLong_FromLong(Handle);
-    }
-
-    RaiseError("Invalid number of arguments.");
-    Py_RETURN_NONE;
+    auto Buffer = AccessObject<BufferObject>(args[0]);
+    GLuint AttrIndex = PyLong_AsLong(args[1]);
+    GLint VectorSize = PyLong_AsLong(args[2]);
+    GLenum Type = GL_FLOAT;
+    GLboolean Normalized = false;
+    GLsizei Stride = 0;
+    int Handle = BindAttributeBuffer(Buffer->BufferId, AttrIndex, VectorSize, Type, Normalized, Stride);
+    return PyLong_FromLong(Handle);
 }
 
 
@@ -115,9 +112,9 @@ PYTHON_API(WrapBindAttributeBuffer)
 
 PYTHON_API(WrapBindUniformBuffer)
 {
-    GLuint BufferId = PyLong_AsLong(args[0]);
+    auto Buffer = AccessObject<BufferObject>(args[0]);
     UniformBlock* BlockPtr = (UniformBlock*) PyLong_AsLong(args[1]);
-    int Handle = BindUniformBuffer(BufferId, BlockPtr->ProgramId, BlockPtr->BlockIndex, 0, BlockPtr->BufferSize);
+    int Handle = BindUniformBuffer(Buffer->BufferId, BlockPtr->ProgramId, BlockPtr->BlockIndex, 0, BlockPtr->BufferSize);
     return PyLong_FromLong(Handle);
 }
 
