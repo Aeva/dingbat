@@ -2,6 +2,7 @@
 
 #include <Python.h>
 #include "object_handle.h"
+#include "matrix_math.h"
 #include "context.h"
 #include "shaders.h"
 #include "buffers.h"
@@ -15,6 +16,7 @@ PyMethodDef ThroughputMethods[] = {
     SHADER_BINDINGS
     BUFFER_BINDINGS
     PAINTER_BINDINGS
+    MATH_BINDINGS
     {"create_test_handle", (PyCFunction)CreateTestHandle, METH_FASTCALL, NULL},
     {NULL, NULL, 0, NULL}
 };
@@ -37,6 +39,10 @@ PyMODINIT_FUNC PyInit_dingbat(void)
 {
     PyObject *Module = PyModule_Create(&ModuleDef);
     if (!InitObjectHandleType(Module))
+    {
+	return NULL;
+    }
+    if (!InitMathTypes(Module))
     {
 	return NULL;
     }
