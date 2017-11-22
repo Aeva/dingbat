@@ -5,6 +5,7 @@
 #include <memory>
 
 using std::shared_ptr;
+using std::make_shared;
 using std::function;
 
 
@@ -34,6 +35,15 @@ PyObject* WrapObject(shared_ptr<T> ManagedObject)
 	delete (shared_ptr<T>*) Wrapped;
     };
     return NewHandle(Wrapped, Deleter);
+}
+
+
+
+
+template<typename T>
+PyObject* WrapLambda(auto&& Lambda)
+{
+    return WrapObject<T>(make_shared<T>(Lambda));
 }
 
 
