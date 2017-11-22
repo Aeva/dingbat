@@ -1,15 +1,13 @@
 
-#include <functional>
-#include <unordered_map>
+#include "object_handle.h"
+#include "shaders.h"
+#include "util.h"
+
 #include <iostream>
 #include <sstream>
-#include "util.h"
-#include "shaders.h"
-#include "object_handle.h"
 
 
 using std::shared_ptr;
-using std::make_shared;
 using std::string;
 using std::vector;
 

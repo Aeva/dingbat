@@ -1,13 +1,7 @@
 
 #define GLFW_INCLUDE_ES31
 #include <GLFW/glfw3.h>
-
 #include "object_handle.h"
-
-#include <iostream>
-#include <functional>
-#include <vector>
-
 #include "painter.h"
 #include "shaders.h"
 #include "buffers.h"
