@@ -6,6 +6,7 @@
 #include <string.h>
 #include <iostream>
 #include <glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 
 using std::string;
@@ -137,6 +138,7 @@ template <typename T>
 PyObject* TypeObjectNew(PyTypeObject* Type, PyObject* Args, PyObject* Kwargs)
 {
     MathHandle<T>* Self;
+    // TODO : This is segfaulting in some situations:
     Self = (MathHandle<T>*)(Type->tp_alloc(Type, 0));
     return (PyObject*)Self;
 }
@@ -260,4 +262,150 @@ bool InitMathTypes(PyObject* Module)
 	    InitMathType<glm::mat2>(Module, "mat2", Mat2Type) &&
 	    InitMathType<glm::mat3>(Module, "mat3", Mat3Type) &&
 	    InitMathType<glm::mat4>(Module, "mat4", Mat4Type));
+}
+
+
+
+
+PyObject* InitMatrixHelper(glm::mat4 Matrix)
+{
+    PyObject *Args = PyTuple_New(0);
+    PyObject *Initialized = PyObject_CallObject((PyObject*)&Mat4Type, Args);
+    MathHandle<glm::mat4>* Thing = (MathHandle<glm::mat4>*)Initialized;
+    if (Thing)
+    {
+	Thing->Wrapped = Matrix;
+    }
+    Py_DECREF(Args);
+    return Initialized;
+}
+
+
+
+
+PYTHON_API(PerspectiveMatrix)
+{
+    if (nargs == 4)
+    {
+	// fov aspect near far
+	return InitMatrixHelper(
+	    glm::perspective(
+		(float)PyFloat_AsDouble(args[0]),
+		(float)PyFloat_AsDouble(args[1]),
+		(float)PyFloat_AsDouble(args[2]),
+		(float)PyFloat_AsDouble(args[3])));
+    }
+    Py_RETURN_NONE;
+}
+
+
+
+
+PYTHON_API(OrthographicMatrix)
+{
+    if (nargs == 6)
+    {
+	// left right bottom top near far
+	return InitMatrixHelper(
+	    glm::ortho(
+		(float)PyFloat_AsDouble(args[0]),
+		(float)PyFloat_AsDouble(args[1]),
+		(float)PyFloat_AsDouble(args[2]),
+		(float)PyFloat_AsDouble(args[3]),
+		(float)PyFloat_AsDouble(args[4]),
+		(float)PyFloat_AsDouble(args[5])));
+    }
+    Py_RETURN_NONE;
+}
+
+
+
+
+PYTHON_API(LookAtMatrix)
+{
+    if (nargs == 9)
+    {
+	auto Eye = glm::vec3(
+	    (float)PyFloat_AsDouble(args[0]),
+	    (float)PyFloat_AsDouble(args[1]),
+	    (float)PyFloat_AsDouble(args[2]));
+	auto Center = glm::vec3(
+	    (float)PyFloat_AsDouble(args[3]),
+	    (float)PyFloat_AsDouble(args[4]),
+	    (float)PyFloat_AsDouble(args[5]));
+	auto Up = glm::vec3(
+	    (float)PyFloat_AsDouble(args[6]),
+	    (float)PyFloat_AsDouble(args[7]),
+	    (float)PyFloat_AsDouble(args[8]));
+	return InitMatrixHelper(glm::lookAt(Eye, Center, Up));
+    }
+    Py_RETURN_NONE;
+}
+
+
+
+
+PYTHON_API(RotationMatrix)
+{
+    if (nargs == 4)
+    {
+	glm::mat4 Identity;
+	float Angle = (float)PyFloat_AsDouble(args[0]);
+	glm::vec3 Pivot = glm::vec3(
+	    (float)PyFloat_AsDouble(args[1]),
+	    (float)PyFloat_AsDouble(args[2]),
+	    (float)PyFloat_AsDouble(args[3]));
+	return InitMatrixHelper(glm::rotate(Identity, Angle, Pivot));
+    }
+    Py_RETURN_NONE;
+}
+
+
+
+
+PYTHON_API(ScaleMatrix)
+{
+    if (nargs == 3)
+    {
+	glm::mat4 Identity;
+	glm::vec3 Scale = glm::vec3((float)PyFloat_AsDouble(args[0]),
+				    (float)PyFloat_AsDouble(args[1]),
+				    (float)PyFloat_AsDouble(args[2]));
+	 return InitMatrixHelper(glm::scale(Identity, Scale));
+    }
+    Py_RETURN_NONE;
+}
+
+
+
+
+PYTHON_API(TranslationMatrix)
+{
+    if (nargs == 3)
+    {
+	glm::mat4 Identity;
+	glm::vec3 Coords = glm::vec3((float)PyFloat_AsDouble(args[0]),
+				     (float)PyFloat_AsDouble(args[1]),
+				     (float)PyFloat_AsDouble(args[2]));
+	return InitMatrixHelper(glm::translate(Identity, Coords));
+    }
+    Py_RETURN_NONE;
+}
+
+
+
+
+// TODO : remove this and override the * operator instead?
+PYTHON_API(MultiplyMatrices)
+{
+    if (nargs >= 2)
+    {
+	glm::mat4 Result(((MathHandle<glm::mat4>*)args[0])->Wrapped);
+	for (int i=1; i<nargs; i++)
+	{
+	    Result = Result * ((MathHandle<glm::mat4>*)args[i])->Wrapped;
+	}
+	return InitMatrixHelper(Result);
+    }
+    Py_RETURN_NONE;
 }
