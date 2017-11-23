@@ -1,6 +1,7 @@
 
 #include "matrix_math.h"
 #include <type_traits>
+#include <typeinfo>
 #include <sstream>
 #include <string>
 #include <string.h>
@@ -137,10 +138,10 @@ PERMUTE(glm::mat4, Matrix)
 template <typename T>
 PyObject* TypeObjectNew(PyTypeObject* Type, PyObject* Args, PyObject* Kwargs)
 {
-    MathHandle<T>* Self;
-    // TODO : This is segfaulting in some situations:
-    Self = (MathHandle<T>*)(Type->tp_alloc(Type, 0));
-    return (PyObject*)Self;
+    PyObject* Self = Type->tp_alloc(Type, 0);
+    MathHandle<T>* Handle = (MathHandle<T>*)Self;
+    Handle->Wrapped = T();
+    return Self;
 }
 
 
@@ -152,7 +153,6 @@ int TypeObjectInit(PyObject* Self, PyObject* Args, PyObject* Kwargs)
 {
     MathHandle<T>* Handle = (MathHandle<T>*)Self;
     T& Vector = Handle->Wrapped;
-    Vector = T();
     
     const int ArgCount = PyTuple_Size(Args);
     if (ArgCount == 0)
@@ -231,9 +231,9 @@ bool InitMathType(PyObject* Module, const char* TypeName, PyTypeObject& TypeObje
     std::ostringstream NameStream;
     NameStream << "dingbat." << TypeName;
     std::string FullName = NameStream.str();
-    
+
     TypeObject.tp_name = strdup(FullName.data());
-    TypeObject.tp_basicsize = sizeof(T);
+    TypeObject.tp_basicsize = sizeof(MathHandle<T>);
     TypeObject.tp_dealloc = (destructor)TypeObjectDeAlloc<T>;
     TypeObject.tp_flags = Py_TPFLAGS_DEFAULT;
     TypeObject.tp_doc = "";
@@ -276,7 +276,7 @@ PyObject* InitMatrixHelper(glm::mat4 Matrix)
     {
 	Thing->Wrapped = Matrix;
     }
-    Py_DECREF(Args);
+    //Py_DECREF(Args);
     return Initialized;
 }
 

@@ -48,12 +48,12 @@ if __name__ == "__main__":
     print(dingbat.orthographic_matrix(-1.0, 1.0, -1.0, 1.0, 0.001, 100.0))
     print(dingbat.lookat_matrix(-20, -20, 20, 0, 0, 0, 0, 0, 1))
     translate = dingbat.translation_matrix(-10, -20, -30)
-    # rotate = dingbat.rotation_matrix(45, 0, 1, 0)
-    # scale = dingbat.scale_matrix(100, 200, 300)
+    rotate = dingbat.rotation_matrix(45, 0, 1, 0)
+    scale = dingbat.scale_matrix(100, 200, 300)
     print(translate)
-    # print(rotate)
-    # print(scale)
-    # print(dingbat.multiply_matrices(translate, rotate, scale))
+    print(rotate)
+    print(scale)
+    print(dingbat.multiply_matrices(translate, rotate, scale))
     try:
         dingbat.setup()
         with open("test.vert", "r") as vert_file:

@@ -11,11 +11,11 @@ PyTypeObject ObjectHandleType;
 
 PyObject* ObjectHandleNew(PyTypeObject* Type, PyObject* Args, PyObject* Kwargs)
 {
-    ObjectHandle* Self;
-    Self = (ObjectHandle*)(Type->tp_alloc(Type, 0));
-    Self->Wrapped = nullptr;
-    Self->Deleter = [](void* Wrapped) {};
-    return (PyObject*)Self;
+    PyObject* Self = Type->tp_alloc(Type, 0);
+    ObjectHandle* Handle = (ObjectHandle*)Self;
+    Handle->Wrapped = nullptr;
+    Handle->Deleter = [](void* Wrapped) {};
+    return Self;
 }
 
 
@@ -78,7 +78,7 @@ PyObject* NewHandle(void* Wrapped, function<void(void*)>& Deleter)
     ObjectHandle* Handle = (ObjectHandle*)Initialized;
     Handle->Wrapped = Wrapped;
     Handle->Deleter = Deleter;
-    Py_DECREF(Args);
+    //Py_DECREF(Args);
     return Initialized;
 }
 
