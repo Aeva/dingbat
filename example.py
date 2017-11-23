@@ -41,6 +41,8 @@ if __name__ == "__main__":
         print("Requires Python 3")
         exit(1)
 
+    #print(dingbat.vec2())
+    #print(dingbat.vec2(array.array('f', (20, 40))))
     try:
         dingbat.setup()
         with open("test.vert", "r") as vert_file:

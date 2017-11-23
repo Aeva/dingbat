@@ -14,6 +14,8 @@ module = Extension(
     extra_compile_args = [
         '-std=c++14',
         '-I/usr/include/glm',
+        # '-O0',
+        # '-g',
     ],
     extra_link_args = linker_args)
 
