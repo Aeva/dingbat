@@ -4,6 +4,8 @@
 #include "util.h"
 #include "buffers.h"
 #include "shaders.h"
+#include "matrix_math.h"
+#include <glm.hpp>
 
 
 using std::make_shared;
@@ -73,88 +75,94 @@ PYTHON_API(WrapFillUniformBlock)
 	UniformEntry* Uniform = &((*Uniforms)[i]);
 	if (Uniform->Type == GL_FLOAT)
 	{
-	    Writer[0] = (float)PyFloat_AsDouble(args[ArgOffset]);
+	    Writer[0] = PyFloat_AsDouble(args[ArgOffset]);
 	    Writer++;
 	    ArgOffset++;
 	}
 	else if (Uniform->Type == GL_FLOAT_VEC2)
 	{
-	    Writer[0] = (float)PyFloat_AsDouble(args[ArgOffset]);
-	    Writer[1] = (float)PyFloat_AsDouble(args[ArgOffset+1]);
+	    glm::vec2 &Vector = ((MathHandle<glm::vec2>*)args[ArgOffset])->Wrapped;
+	    Writer[0] = Vector[0];
+	    Writer[1] = Vector[1];
 	    Writer += 2;
-	    ArgOffset += 2;
+	    ArgOffset += 1;
 	}
 	else if (Uniform->Type == GL_FLOAT_VEC3)
 	{
-	    Writer[0] = (float)PyFloat_AsDouble(args[ArgOffset]);
-	    Writer[1] = (float)PyFloat_AsDouble(args[ArgOffset+1]);
-	    Writer[2] = (float)PyFloat_AsDouble(args[ArgOffset+2]);
+	    glm::vec3 &Vector = ((MathHandle<glm::vec3>*)args[ArgOffset])->Wrapped;
+	    Writer[0] = Vector[0];
+	    Writer[1] = Vector[1];
+	    Writer[2] = Vector[2];
 	    Writer += 4; // intentional
-	    ArgOffset += 3;
+	    ArgOffset += 1;
 	}
 	else if (Uniform->Type == GL_FLOAT_VEC4)
 	{
-	    Writer[0] = (float)PyFloat_AsDouble(args[ArgOffset]);
-	    Writer[1] = (float)PyFloat_AsDouble(args[ArgOffset+1]);
-	    Writer[2] = (float)PyFloat_AsDouble(args[ArgOffset+2]);
-	    Writer[3] = (float)PyFloat_AsDouble(args[ArgOffset+3]);
+	    glm::vec4 &Vector = ((MathHandle<glm::vec4>*)args[ArgOffset])->Wrapped;
+	    Writer[0] = Vector[0];
+	    Writer[1] = Vector[1];
+	    Writer[2] = Vector[2];
+	    Writer[3] = Vector[3];
 	    Writer += 4;
-	    ArgOffset += 4;
+	    ArgOffset += 1;
 	}
 	else if (Uniform->Type == GL_FLOAT_MAT2)
 	{
-	    Writer[0] = (float)PyFloat_AsDouble(args[ArgOffset]);
-	    Writer[1] = (float)PyFloat_AsDouble(args[ArgOffset+1]);
+	    glm::mat2 &Matrix = ((MathHandle<glm::mat2>*)args[ArgOffset])->Wrapped;
+	    Writer[0] = Matrix[0][0];
+	    Writer[1] = Matrix[0][1];
 	    Writer[2] = 0.0;
 	    Writer[3] = 0.0;
-	    Writer[4] = (float)PyFloat_AsDouble(args[ArgOffset+2]);
-	    Writer[5] = (float)PyFloat_AsDouble(args[ArgOffset+3]);
+	    Writer[4] = Matrix[1][0];
+	    Writer[5] = Matrix[1][1];
 	    Writer[6] = 0.0;
 	    Writer[7] = 0.0;
 	    Writer += 8;
-	    ArgOffset += 4;
+	    ArgOffset += 1;
 	}
 	else if (Uniform->Type == GL_FLOAT_MAT3)
 	{
-	    Writer[0] = (float)PyFloat_AsDouble(args[ArgOffset]);
-	    Writer[1] = (float)PyFloat_AsDouble(args[ArgOffset+1]);
-	    Writer[2] = (float)PyFloat_AsDouble(args[ArgOffset+2]);
+	    glm::mat3 &Matrix = ((MathHandle<glm::mat3>*)args[ArgOffset])->Wrapped;
+	    Writer[0] = Matrix[0][0];
+	    Writer[1] = Matrix[0][1];
+	    Writer[2] = Matrix[0][2];
 	    Writer[3] = 0.0;
-	    Writer[4] = (float)PyFloat_AsDouble(args[ArgOffset+3]);
-	    Writer[5] = (float)PyFloat_AsDouble(args[ArgOffset+4]);
-	    Writer[6] = (float)PyFloat_AsDouble(args[ArgOffset+5]);
+	    Writer[4] = Matrix[1][0];
+	    Writer[5] = Matrix[1][1];
+	    Writer[6] = Matrix[1][2];
 	    Writer[7] = 0.0;
-	    Writer[8] = (float)PyFloat_AsDouble(args[ArgOffset+6]);
-	    Writer[9] = (float)PyFloat_AsDouble(args[ArgOffset+7]);
-	    Writer[10] = (float)PyFloat_AsDouble(args[ArgOffset+8]);
+	    Writer[8] = Matrix[2][0];
+	    Writer[9] = Matrix[2][1];
+	    Writer[10] = Matrix[2][2];
 	    Writer[11] = 0.0;
 	    Writer += 12;
-	    ArgOffset += 6;
+	    ArgOffset += 1;
 	}
 	else if (Uniform->Type == GL_FLOAT_MAT4)
 	{
-	    Writer[0] = (float)PyFloat_AsDouble(args[ArgOffset]);
-	    Writer[1] = (float)PyFloat_AsDouble(args[ArgOffset+1]);
-	    Writer[2] = (float)PyFloat_AsDouble(args[ArgOffset+2]);
-	    Writer[3] = (float)PyFloat_AsDouble(args[ArgOffset+3]);
+	    glm::mat4 &Matrix = ((MathHandle<glm::mat4>*)args[ArgOffset])->Wrapped;
+	    Writer[0] = Matrix[0][0];
+	    Writer[1] = Matrix[0][1];
+	    Writer[2] = Matrix[0][2];
+	    Writer[3] = Matrix[0][3];
 
-	    Writer[4] = (float)PyFloat_AsDouble(args[ArgOffset+4]);
-	    Writer[5] = (float)PyFloat_AsDouble(args[ArgOffset+5]);
-	    Writer[6] = (float)PyFloat_AsDouble(args[ArgOffset+6]);
-	    Writer[7] = (float)PyFloat_AsDouble(args[ArgOffset+7]);
+	    Writer[4] = Matrix[1][0];
+	    Writer[5] = Matrix[1][1];
+	    Writer[6] = Matrix[1][2];
+	    Writer[7] = Matrix[1][3];
 
-	    Writer[8] = (float)PyFloat_AsDouble(args[ArgOffset+8]);
-	    Writer[9] = (float)PyFloat_AsDouble(args[ArgOffset+9]);
-	    Writer[10] = (float)PyFloat_AsDouble(args[ArgOffset+10]);
-	    Writer[11] = (float)PyFloat_AsDouble(args[ArgOffset+11]);
+	    Writer[8] = Matrix[2][0];
+	    Writer[9] = Matrix[2][1];
+	    Writer[10] = Matrix[2][2];
+	    Writer[11] = Matrix[2][3];
 
-	    Writer[12] = (float)PyFloat_AsDouble(args[ArgOffset+12]);
-	    Writer[13] = (float)PyFloat_AsDouble(args[ArgOffset+13]);
-	    Writer[14] = (float)PyFloat_AsDouble(args[ArgOffset+14]);
-	    Writer[15] = (float)PyFloat_AsDouble(args[ArgOffset+15]);
+	    Writer[12] = Matrix[3][0];
+	    Writer[13] = Matrix[3][1];
+	    Writer[14] = Matrix[3][2];
+	    Writer[15] = Matrix[3][3];
 
 	    Writer += 12;
-	    ArgOffset += 16;
+	    ArgOffset += 1 ;
 	}
 	else
 	{

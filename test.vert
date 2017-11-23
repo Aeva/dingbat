@@ -9,8 +9,7 @@ out highp vec3 Color;
 
 layout(std140) uniform SomeBlock
 {
-    float SomeParam;
-    //vec2 Offset;
+    mat4 SomeMatrix;
 };
 
 
@@ -19,5 +18,5 @@ layout(std140) uniform SomeBlock
 void main()
 {
     Color = VertexColor;
-    gl_Position = vec4(VertexPosition.x + SomeParam, VertexPosition.yz, 1.0);
+    gl_Position = SomeMatrix * vec4(VertexPosition.xyz, 1.0);
 }

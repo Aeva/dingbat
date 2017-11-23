@@ -31,7 +31,7 @@ class DemoDrawable:
             dingbat.bind_draw_arrays(0, 9),
         ]
 
-        dingbat.fill_uniform_block(self.uniform_buffer, self.uniform_block, 0.0)
+        dingbat.fill_uniform_block(self.uniform_buffer, self.uniform_block, dingbat.mat4())
 
 
         
@@ -41,19 +41,19 @@ if __name__ == "__main__":
         print("Requires Python 3")
         exit(1)
 
-    print(dingbat.vec2())
-    print(dingbat.vec2(array.array('f', (20, 40))))
-    print(dingbat.mat3())
-    print(dingbat.perspective_matrix(45, 640/480, 0.001, 100.0))
-    print(dingbat.orthographic_matrix(-1.0, 1.0, -1.0, 1.0, 0.001, 100.0))
-    print(dingbat.lookat_matrix(-20, -20, 20, 0, 0, 0, 0, 0, 1))
-    translate = dingbat.translation_matrix(-10, -20, -30)
-    rotate = dingbat.rotation_matrix(45, 0, 1, 0)
-    scale = dingbat.scale_matrix(100, 200, 300)
-    print(translate)
-    print(rotate)
-    print(scale)
-    print(dingbat.multiply_matrices(translate, rotate, scale))
+    # print(dingbat.vec2())
+    # print(dingbat.vec2(array.array('f', (20, 40))))
+    # print(dingbat.mat3())
+    # print(dingbat.perspective_matrix(45, 640/480, 0.001, 100.0))
+    # print(dingbat.orthographic_matrix(-1.0, 1.0, -1.0, 1.0, 0.001, 100.0))
+    # print(dingbat.lookat_matrix(-20, -20, 20, 0, 0, 0, 0, 0, 1))
+    # translate = dingbat.translation_matrix(-10, -20, -30)
+    # rotate = dingbat.rotation_matrix(45, 0, 1, 0)
+    # scale = dingbat.scale_matrix(100, 200, 300)
+    # print(translate)
+    # print(rotate)
+    # print(scale)
+    # print(dingbat.multiply_matrices(translate, rotate, scale))
     try:
         dingbat.setup()
         with open("test.vert", "r") as vert_file:
@@ -92,8 +92,10 @@ if __name__ == "__main__":
             last = now
             #print ("delta: %s" % str(1/delta))
 
-            offset_a = math.sin(now * 1.5) * 0.6
-            offset_b = offset_a * -1
+            #offset_a = math.sin(now * 1.5) * 0.6
+            #offset_b = offset_a * -1
+            offset_a = dingbat.rotation_matrix(now * 1.5, 0, 0, 1)
+            offset_b = dingbat.rotation_matrix(now * -1.5, 0, 0, 1)
             dingbat.fill_uniform_block(entity_a.uniform_buffer, entity_a.uniform_block, offset_a)
             dingbat.fill_uniform_block(entity_b.uniform_buffer, entity_b.uniform_block, offset_b)
 
