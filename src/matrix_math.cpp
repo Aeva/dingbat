@@ -8,7 +8,7 @@
 #include <glm.hpp>
 
 
-using std::type_info;
+using std::string;
 
 
 PyTypeObject Vec2Type;
@@ -44,7 +44,7 @@ constexpr bool IsMatrix()
 
 
 template <typename T>
-inline void FillVector(T Vector, float* Values)
+inline void FillVector(T& Vector, float* Values)
 {
     static_assert(IsVector<T>());
     for (int i=0; i<Vector.length(); i++)
@@ -57,32 +57,77 @@ inline void FillVector(T Vector, float* Values)
 
 
 template <typename T>
-inline void FillMatrix(T Matrix, float* Values)
+inline void FillMatrix(T& Matrix, float* Values)
 {
     static_assert(IsMatrix<T>());
-    constexpr int Period = (std::is_same<T, glm::mat2>::value ? 2 :
-			    std::is_same<T, glm::mat3>::value ? 3 : 4);
-    for (int i=0; i<Matrix.length(); i++)
+    int i = 0;
+    for (int x=0; x<Matrix.length(); x++)
     {
-	int y = i % Period;
-	int x = i / Period;
-	Matrix[x][y] = Values[i];
+	for (int y=0; y<Matrix.length(); y++)
+	{
+	    Matrix[x][y] = Values[i];
+	    i++;
+	}
     }
 }
 
 
 
 
+template <typename T>
+inline string ReprVector(T& Vector)
+{
+    static_assert(IsVector<T>());
+    std::ostringstream Repr;
+    Repr << "<Vector: " << Vector[0];
+    for (int i=1; i<Vector.length(); i++)
+    {
+	Repr << ", " << Vector[i];
+    }
+    Repr << ">";
+    return Repr.str();
+}
+
+
+
+
+template <typename T>
+inline string ReprMatrix(T& Matrix)
+{
+    static_assert(IsMatrix<T>());
+    std::ostringstream Repr;
+    Repr << "<Matrix: ";
+    for (int x=0; x<Matrix.length(); x++)
+    {
+	for (int y=0; y<Matrix.length(); y++)
+	{
+	    if (!(x == 0 && y == 0)) Repr << ", ";
+	    Repr << Matrix[x][y];
+	}
+    }
+    Repr << ">";
+    return Repr.str();
+}
+
+
+
+
 // TODO : find a cleaner way to do this.  `if constexpr` would be nice.
-#define PERMUTE(T) inline void FillThing( T Vector, float* Values ) { FillVector<decltype(Vector)>(Vector, Values); }
-PERMUTE(glm::vec2)
-PERMUTE(glm::vec3)
-PERMUTE(glm::vec4)
+#define PERMUTE(T, Name) inline void FillThing(T& Name, float* Values) { Fill##Name<T>(Name, Values); }
+PERMUTE(glm::vec2, Vector)
+PERMUTE(glm::vec3, Vector)
+PERMUTE(glm::vec4, Vector)
+PERMUTE(glm::mat2, Matrix)
+PERMUTE(glm::mat3, Matrix)
+PERMUTE(glm::mat4, Matrix)
 #undef PERMUTE
-#define PERMUTE(T) inline void FillThing( T Matrix, float* Values ) { FillMatrix<decltype(Matrix)>(Matrix, Values); }
-PERMUTE(glm::mat2)
-PERMUTE(glm::mat3)
-PERMUTE(glm::mat4)
+#define PERMUTE(T, Name) inline string ReprThing(T& Name) { return Repr##Name<T>(Name); }
+PERMUTE(glm::vec2, Vector)
+PERMUTE(glm::vec3, Vector)
+PERMUTE(glm::vec4, Vector)
+PERMUTE(glm::mat2, Matrix)
+PERMUTE(glm::mat3, Matrix)
+PERMUTE(glm::mat4, Matrix)
 #undef PERMUTE
 
 
@@ -99,19 +144,20 @@ PyObject* TypeObjectNew(PyTypeObject* Type, PyObject* Args, PyObject* Kwargs)
 
 
 
-// TODO : Returning -1 causes segfaults?  What is the correct error
-//        code?
+// TODO : Returning -1 causes segfaults?  What is the correct error code?
 template <typename T>
 int TypeObjectInit(PyObject* Self, PyObject* Args, PyObject* Kwargs)
 {
+    MathHandle<T>* Handle = (MathHandle<T>*)Self;
+    T& Vector = Handle->Wrapped;
+    Vector = T();
+    
     const int ArgCount = PyTuple_Size(Args);
     if (ArgCount == 0)
     {
 	return 0;
     }
 
-    MathHandle<T>* Handle = (MathHandle<T>*)Self;
-    T& Vector = Handle->Wrapped;
     const int Size = Vector.length();
     
     if (ArgCount == 1)
@@ -163,6 +209,17 @@ void TypeObjectDeAlloc(PyObject* Self)
 
 
 template <typename T>
+PyObject* TypeObjectPrint(PyObject* Self)
+{
+    MathHandle<T>* Handle = (MathHandle<T>*)Self;
+    string Repr = ReprThing(Handle->Wrapped);
+    return PyUnicode_FromString(Repr.data());
+}
+
+
+
+
+template <typename T>
 bool InitMathType(PyObject* Module, const char* TypeName, PyTypeObject& TypeObject)
 {
     TypeObject = {
@@ -180,6 +237,7 @@ bool InitMathType(PyObject* Module, const char* TypeName, PyTypeObject& TypeObje
     TypeObject.tp_doc = "";
     TypeObject.tp_new = TypeObjectNew<T>;
     TypeObject.tp_init = (initproc)TypeObjectInit<T>;
+    TypeObject.tp_repr = TypeObjectPrint<T>;
 
     if (PyType_Ready(&TypeObject) < 0)
     {
