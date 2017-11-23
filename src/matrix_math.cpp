@@ -276,7 +276,7 @@ PyObject* InitMatrixHelper(glm::mat4 Matrix)
     {
 	Thing->Wrapped = Matrix;
     }
-    //Py_DECREF(Args);
+    Py_DECREF(Args);
     return Initialized;
 }
 

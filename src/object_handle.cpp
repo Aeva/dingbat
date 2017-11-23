@@ -78,7 +78,7 @@ PyObject* NewHandle(void* Wrapped, function<void(void*)>& Deleter)
     ObjectHandle* Handle = (ObjectHandle*)Initialized;
     Handle->Wrapped = Wrapped;
     Handle->Deleter = Deleter;
-    //Py_DECREF(Args);
+    Py_DECREF(Args);
     return Initialized;
 }
 
