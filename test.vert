@@ -9,7 +9,8 @@ out highp vec3 Color;
 
 layout(std140) uniform SomeBlock
 {
-    mat4 SomeMatrix;
+    mat4 CameraMatrix;
+    mat4 WorldMatrix;
 };
 
 
@@ -18,5 +19,5 @@ layout(std140) uniform SomeBlock
 void main()
 {
     Color = VertexColor;
-    gl_Position = SomeMatrix * vec4(VertexPosition.xyz, 1.0);
+    gl_Position = CameraMatrix * WorldMatrix * vec4(VertexPosition.xyz, 1.0);
 }

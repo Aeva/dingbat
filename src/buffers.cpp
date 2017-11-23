@@ -85,7 +85,7 @@ PYTHON_API(WrapFillUniformBlock)
 	    Writer[0] = Vector[0];
 	    Writer[1] = Vector[1];
 	    Writer += 2;
-	    ArgOffset += 1;
+	    ArgOffset++;
 	}
 	else if (Uniform->Type == GL_FLOAT_VEC3)
 	{
@@ -94,7 +94,7 @@ PYTHON_API(WrapFillUniformBlock)
 	    Writer[1] = Vector[1];
 	    Writer[2] = Vector[2];
 	    Writer += 4; // intentional
-	    ArgOffset += 1;
+	    ArgOffset++;
 	}
 	else if (Uniform->Type == GL_FLOAT_VEC4)
 	{
@@ -104,7 +104,7 @@ PYTHON_API(WrapFillUniformBlock)
 	    Writer[2] = Vector[2];
 	    Writer[3] = Vector[3];
 	    Writer += 4;
-	    ArgOffset += 1;
+	    ArgOffset++;
 	}
 	else if (Uniform->Type == GL_FLOAT_MAT2)
 	{
@@ -118,7 +118,7 @@ PYTHON_API(WrapFillUniformBlock)
 	    Writer[6] = 0.0;
 	    Writer[7] = 0.0;
 	    Writer += 8;
-	    ArgOffset += 1;
+	    ArgOffset++;
 	}
 	else if (Uniform->Type == GL_FLOAT_MAT3)
 	{
@@ -136,7 +136,7 @@ PYTHON_API(WrapFillUniformBlock)
 	    Writer[10] = Matrix[2][2];
 	    Writer[11] = 0.0;
 	    Writer += 12;
-	    ArgOffset += 1;
+	    ArgOffset++;
 	}
 	else if (Uniform->Type == GL_FLOAT_MAT4)
 	{
@@ -161,8 +161,8 @@ PYTHON_API(WrapFillUniformBlock)
 	    Writer[14] = Matrix[3][2];
 	    Writer[15] = Matrix[3][3];
 
-	    Writer += 12;
-	    ArgOffset += 1 ;
+	    Writer += 16;
+	    ArgOffset++;
 	}
 	else
 	{

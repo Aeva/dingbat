@@ -64,9 +64,9 @@ if __name__ == "__main__":
 
 
         clip_space_triangle = [
-            0.0, 0.5, 0.0,
-            -0.5, -0.5, 0.0,
-            0.5, -0.5, 0.0
+            0.0, 0.0, 0.5,
+            -0.5, 0.0, -0.5,
+            0.5, 0.0, -0.5,
         ]
 
         vertex_colors_primary = [
@@ -84,20 +84,23 @@ if __name__ == "__main__":
         entity_a = DemoDrawable(shader, clip_space_triangle, vertex_colors_primary)
         entity_b = DemoDrawable(shader, clip_space_triangle, vertex_colors_secondary)
         draw_bindings = entity_a.draw_bindings + entity_b.draw_bindings
+
+        camera_matrix = dingbat.multiply_matrices(
+            dingbat.perspective_matrix(45, 640/480, 0.001, 100.0),
+            dingbat.lookat_matrix(0, -1, 0, 0, 0, 0, 0, 0, 1))
         
         last = time.monotonic()
         while True:
             now = time.monotonic()
             delta = now - last
             last = now
-            #print ("delta: %s" % str(1/delta))
+            # print ("delta: %s" % str(1/delta))
 
-            #offset_a = math.sin(now * 1.5) * 0.6
-            #offset_b = offset_a * -1
-            offset_a = dingbat.rotation_matrix(now * 1.5, 0, 0, 1)
-            offset_b = dingbat.rotation_matrix(now * -1.5, 0, 0, 1)
-            dingbat.fill_uniform_block(entity_a.uniform_buffer, entity_a.uniform_block, offset_a)
-            dingbat.fill_uniform_block(entity_b.uniform_buffer, entity_b.uniform_block, offset_b)
+            offset_a = dingbat.rotation_matrix(now * 1.5, 0, 1, 0)
+            offset_b = dingbat.rotation_matrix(now * -1.5, 0, 1, 0)
+            
+            dingbat.fill_uniform_block(entity_a.uniform_buffer, entity_a.uniform_block, camera_matrix, offset_a)
+            dingbat.fill_uniform_block(entity_b.uniform_buffer, entity_b.uniform_block, camera_matrix, offset_b)
 
             dingbat.clear()
             dingbat.batch_draw(*draw_bindings)
