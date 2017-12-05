@@ -1,6 +1,5 @@
 
-#define GLFW_INCLUDE_ES31
-#include <GLFW/glfw3.h>
+#include "gl_api.h"
 #include <unordered_map>
 #include <Python.h>
 

@@ -61,9 +61,35 @@ string CheckStatus(GLuint ObjectId, GLenum StatusEnum)
     }
     return string();
 }
+
+#if USING_GL_ES_3
 // Aliases
 string (&CheckShaderStatus)(GLuint, GLenum) = CheckStatus<glGetShaderiv, glGetShaderInfoLog>;
 string (&CheckProgramStatus)(GLuint, GLenum) = CheckStatus<glGetProgramiv, glGetProgramInfoLog>;
+#else
+// HACK If we build with GLEW, the above will fail with the rvalue
+// being "<unresolved overloaded function type>".  This is, uh, not an
+// acceptable work-around, but I really want to get renderdoc working
+// and I'm tired.
+void hackGetShaderiv(GLuint shader,  GLenum pname,  GLint *params)
+{
+    glGetShaderiv(shader, pname, params);
+}
+void hackGetShaderInfoLog(GLuint shader, GLsizei maxLength, GLsizei *length, GLchar *infoLog)
+{
+    glGetShaderInfoLog(shader, maxLength, length, infoLog);
+}
+void hackGetProgramiv(GLuint shader,  GLenum pname,  GLint *params)
+{
+    glGetProgramiv(shader, pname, params);
+}
+void hackGetProgramInfoLog(GLuint shader, GLsizei maxLength, GLsizei *length, GLchar *infoLog)
+{
+    glGetProgramInfoLog(shader, maxLength, length, infoLog);
+}
+string (&CheckShaderStatus)(GLuint, GLenum) = CheckStatus<hackGetShaderiv, hackGetShaderInfoLog>;
+string (&CheckProgramStatus)(GLuint, GLenum) = CheckStatus<hackGetProgramiv, hackGetProgramInfoLog>;
+#endif
 
 
 

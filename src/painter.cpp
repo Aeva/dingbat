@@ -1,6 +1,5 @@
 
-#define GLFW_INCLUDE_ES31
-#include <GLFW/glfw3.h>
+#include "gl_api.h"
 #include "object_handle.h"
 #include "painter.h"
 #include "shaders.h"
