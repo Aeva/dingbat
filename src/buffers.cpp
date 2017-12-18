@@ -15,9 +15,7 @@ using std::make_shared;
 void FillBuffer(GLenum BufferType, GLint BufferId, GLsizeiptr Size, const GLvoid *Data, GLenum UsageHint)
 {
     glBindBuffer(BufferType, BufferId);
-    // CheckforGlError();
     glBufferData(BufferType, Size, Data, UsageHint);
-    // CheckforGlError();
 }
 
 
@@ -172,6 +170,5 @@ PYTHON_API(WrapFillUniformBlock)
     
     FillBuffer(GL_UNIFORM_BUFFER, Buffer->BufferId, BufferSize, Blob, GL_DYNAMIC_DRAW);
     free(Blob);
-    CheckforGlError();
     Py_RETURN_NONE;
 }

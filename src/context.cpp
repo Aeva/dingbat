@@ -2,17 +2,36 @@
 #include "gl_api.h"
 #include "context.h"
 #include <Python.h>
+#include <iostream>
 
 
 bool bSetupCompleted = false;
-GLFWwindow* window;
+GLFWwindow* Window;
 
 
 
 
-void WindowCloseCallback(GLFWwindow* window)
+void WindowCloseCallback(GLFWwindow* Window)
 {
     PyErr_SetInterrupt();   
+}
+
+
+
+
+void DebugCallback(GLenum Source, 
+		   GLenum Type, 
+		   GLuint Id, 
+		   GLenum Severity, 
+		   GLsizei MessageLength, 
+		   const GLchar *ErrorMessage, 
+		   const void *UserParam)
+{
+    std::cout << ErrorMessage << "\n";
+    if (Severity == GL_DEBUG_SEVERITY_HIGH)
+    {
+	PyErr_SetString(PyExc_RuntimeError, ErrorMessage);
+    }
 }
 
 
@@ -36,13 +55,16 @@ PYTHON_API(SetupContext)
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #endif
-	window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
-	if (!window)
+#if DEBUG_BUILD
+	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+#endif	
+	Window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
+	if (!Window)
 	{
 	    Py_RETURN_NONE;
 	}
-	glfwMakeContextCurrent(window);
-	glfwSetWindowCloseCallback(window, WindowCloseCallback);
+	glfwMakeContextCurrent(Window);
+	glfwSetWindowCloseCallback(Window, WindowCloseCallback);
 
 #if USING_GL_4_2
 	GLenum GlewError = glewInit();
@@ -60,6 +82,22 @@ PYTHON_API(SetupContext)
 	}
 #endif
 	
+#if DEBUG_BUILD
+	GLint ContextFlags;
+	glGetIntegerv(GL_CONTEXT_FLAGS, &ContextFlags);
+	if (ContextFlags & GL_CONTEXT_FLAG_DEBUG_BIT)
+	{
+	    glEnable(GL_DEBUG_OUTPUT);
+	    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS); 
+	    glDebugMessageCallback(&DebugCallback, nullptr);
+	    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+
+	}
+	else
+	{
+	    std::cout << "Debug context not available!\n";
+	}
+#endif
         bSetupCompleted = true;
     }
     Py_RETURN_NONE;
@@ -72,7 +110,7 @@ PYTHON_API(TeardownContext)
 {
     if (bSetupCompleted)
     {
-        glfwDestroyWindow(window);
+        glfwDestroyWindow(Window);
         glfwTerminate();
         bSetupCompleted = false;
     }
@@ -84,7 +122,7 @@ PYTHON_API(TeardownContext)
 
 PYTHON_API(SwapBuffers)
 {
-    glfwSwapBuffers(window);
+    glfwSwapBuffers(Window);
     glfwPollEvents();
     Py_RETURN_NONE;
 }

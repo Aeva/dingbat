@@ -4,6 +4,7 @@ import glob
 
 
 USE_ES3 = False
+USE_DEBUGGING = True
 
 
 linker_args = subprocess.check_output(
@@ -20,16 +21,22 @@ else:
     linker_args += "-lGL -lGLEW".split(' ')
     defines.append(("USING_GL_4_2", None))
 
+compiler_args = [
+    '-std=c++14',
+    '-I/usr/include/glm',
+]
+
+if USE_DEBUGGING:
+    compiler_args += [
+        '-O0',
+        '-g',
+    ]
+    defines.append(("DEBUG_BUILD", None))
 
 module = Extension(
     'dingbat',
     sources = glob.glob('src/*.cpp'),
-    extra_compile_args = [
-        '-std=c++14',
-        '-I/usr/include/glm',
-        # '-O0',
-        # '-g',
-    ],
+    extra_compile_args = compiler_args,
     extra_link_args = linker_args,
     define_macros = defines)
 

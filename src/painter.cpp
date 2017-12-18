@@ -5,6 +5,7 @@
 #include "shaders.h"
 #include "buffers.h"
 #include "util.h"
+#include <iostream>
 
 using std::make_shared;
 using BindingInterface = std::function<void()>;
@@ -26,7 +27,6 @@ PYTHON_API(BindAttributeBuffer)
 	glBindBuffer(GL_ARRAY_BUFFER, Buffer->BufferId);
 	glEnableVertexAttribArray(AttrIndex);
 	glVertexAttribPointer(AttrIndex, VectorSize, Type, Normalized, Stride, 0);
-	CheckforGlError();
     });
 }
 
@@ -48,7 +48,6 @@ PYTHON_API(BindUniformBuffer)
     {
 	glUniformBlockBinding(ProgramId, ProgramBlockIndex, ProgramBlockIndex);
 	glBindBufferRange(GL_UNIFORM_BUFFER, ProgramBlockIndex, Buffer->BufferId, Offset, Size);
-	CheckforGlError();
     });
 }
 
@@ -63,7 +62,6 @@ PYTHON_API(BindDrawArrays)
     return WrapLambda<BindingInterface>([=]()
     {
 	glDrawArrays(PrimitiveType, Offset, Range);
-	CheckforGlError();
     });
 }
 
