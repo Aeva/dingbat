@@ -19,6 +19,7 @@ void WindowCloseCallback(GLFWwindow* Window)
 
 
 
+#if DEBUG_BUILD && USING_GL_4_2
 void DebugCallback(GLenum Source, 
 		   GLenum Type, 
 		   GLuint Id, 
@@ -33,6 +34,7 @@ void DebugCallback(GLenum Source,
 	PyErr_SetString(PyExc_RuntimeError, ErrorMessage);
     }
 }
+#endif
 
 
 
@@ -82,7 +84,7 @@ PYTHON_API(SetupContext)
 	}
 #endif
 	
-#if DEBUG_BUILD
+#if DEBUG_BUILD && USING_GL_4_2
 	GLint ContextFlags;
 	glGetIntegerv(GL_CONTEXT_FLAGS, &ContextFlags);
 	if (ContextFlags & GL_CONTEXT_FLAG_DEBUG_BIT)

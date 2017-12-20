@@ -4,7 +4,7 @@ import glob
 
 
 USE_ES3 = False
-USE_DEBUGGING = True
+USE_DEBUGGING = False
 
 
 linker_args = subprocess.check_output(
