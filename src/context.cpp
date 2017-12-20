@@ -43,6 +43,7 @@ PYTHON_API(SetupContext)
     {
         if (!glfwInit())
 	{
+	    PyErr_SetString(PyExc_RuntimeError, "Glfw failed to initialize.\n");
 	    Py_RETURN_NONE;
 	}
 
@@ -52,7 +53,6 @@ PYTHON_API(SetupContext)
 #elif USING_GL_4_2
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #endif
 #if DEBUG_BUILD
@@ -100,6 +100,13 @@ PYTHON_API(SetupContext)
 #endif
         bSetupCompleted = true;
     }
+#if USING_GL_4_2
+    // Hack to support 4.2 core.  Remove this once an intentional
+    // means of creating VAOs is added.
+    GLuint DefaultVAO;
+    glGenVertexArrays(1, &DefaultVAO);
+    glBindVertexArray(DefaultVAO);
+#endif
     Py_RETURN_NONE;
 }
 
