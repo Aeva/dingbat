@@ -100,15 +100,21 @@ PYTHON_API(SetupContext)
 	    std::cout << "Debug context not available!\n";
 	}
 #endif
+	// Turning these on by default for now.
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+
+#if USING_GL_4_2
+	// Hack to support 4.2 core.  Remove this once an intentional
+	// means of creating VAOs is added.
+	GLuint DefaultVAO;
+	glGenVertexArrays(1, &DefaultVAO);
+	glBindVertexArray(DefaultVAO);
+#endif
         bSetupCompleted = true;
     }
-#if USING_GL_4_2
-    // Hack to support 4.2 core.  Remove this once an intentional
-    // means of creating VAOs is added.
-    GLuint DefaultVAO;
-    glGenVertexArrays(1, &DefaultVAO);
-    glBindVertexArray(DefaultVAO);
-#endif
     Py_RETURN_NONE;
 }
 
