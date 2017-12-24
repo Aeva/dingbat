@@ -34,7 +34,7 @@ if USE_DEBUGGING:
     defines.append(("DEBUG_BUILD", None))
 
 module = Extension(
-    'dingbat',
+    'dingbat.backend',
     sources = glob.glob('src/*.cpp'),
     extra_compile_args = compiler_args,
     extra_link_args = linker_args,
@@ -44,4 +44,5 @@ module = Extension(
 setup(name = 'dingbat',
       version = '0.0',
       description = '',
+      packages = ['dingbat'],
       ext_modules = [module])

@@ -26,7 +26,7 @@ PyMethodDef ThroughputMethods[] = {
 
 PyModuleDef ModuleDef = {
     PyModuleDef_HEAD_INIT,
-    "dingbat",
+    "backend",
     "",
     -1,
     ThroughputMethods
@@ -35,7 +35,7 @@ PyModuleDef ModuleDef = {
 
 
 
-PyMODINIT_FUNC PyInit_dingbat(void)
+PyMODINIT_FUNC PyInit_backend(void)
 {
     PyObject *Module = PyModule_Create(&ModuleDef);
     if (!InitObjectHandleType(Module))
